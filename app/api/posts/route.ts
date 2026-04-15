@@ -6,6 +6,7 @@ import {
   validatePlatform,
   validateMediaType,
   validateTimestamp,
+  validateInstagramPost,
 } from "@/lib/api/validation";
 import { createPost } from "@/lib/posts/service";
 import { accountExists } from "@/lib/accounts/service";
@@ -99,6 +100,19 @@ export async function POST(req: NextRequest) {
           );
         }
       }
+    }
+
+    // Validate Instagram post requirements (must have media)
+    const igValidation = validateInstagramPost({
+      platform: body.platform,
+      media: body.media,
+    });
+    if (!igValidation.valid) {
+      return apiError(
+        API_ERRORS.VALIDATION_ERROR.code,
+        igValidation.error || "Instagram validation failed",
+        API_ERRORS.VALIDATION_ERROR.status
+      );
     }
 
     // Create post

@@ -86,3 +86,21 @@ export function validateTimestamp(
   }
   return { valid: true };
 }
+
+/**
+ * Validate Instagram post requirements (media is mandatory)
+ */
+export function validateInstagramPost(payload: {
+  platform?: string;
+  media?: Array<{ url: string; type: string }>;
+}): { valid: boolean; error?: string } {
+  if (payload.platform === "instagram") {
+    if (!payload.media || payload.media.length === 0) {
+      return {
+        valid: false,
+        error: "Instagram posts require at least one media item (image or video)",
+      };
+    }
+  }
+  return { valid: true };
+}
