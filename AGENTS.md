@@ -243,6 +243,78 @@ The worker is a continuous loop:
 
 ---
 
+## MinIO Integration
+
+### Storage Modes
+
+The system supports two storage modes via `MINIO_STORAGE_MODE` environment variable:
+
+#### Local Mode (Development)
+- `MINIO_STORAGE_MODE=local` (default)
+- Files stored in `./storage/media/` directory
+- No external service required
+- Perfect for local development and testing
+- Files served via `GET /api/media/serve/{storageKey}`
+
+#### MinIO Mode (Production)
+- `MINIO_STORAGE_MODE=minio`
+- Files uploaded to remote MinIO server (or S3-compatible)
+- Requires MinIO connection env variables
+- Presigned URLs generated for all files
+- Automatic bucket creation on startup
+
+### API Endpoints
+
+#### POST /api/media/upload
+Upload media and create media record
+- Accepts: `multipart/form-data` with file, postId, type
+- Validation:
+  - File size: max 100MB
+  - Allowed types: image (jpeg, png, gif, webp), video (mp4, mov, avi)
+  - postId must be valid
+  - type must be "image" or "video"
+- Response: `{ success, media: { id, url, storageKey, publicUrl } }`
+- Returns presigned URL (local mode: `/api/media/serve/{key}`, MinIO mode: S3 signed URL)
+
+#### GET /api/media/serve/[...storageKey]
+Serve media files (local mode only)
+- Only available when `MINIO_STORAGE_MODE=local`
+- Prevents directory traversal attacks
+- Returns proper Content-Type headers
+- 1-year cache control
+
+### Environment Variables
+
+```env
+# Storage mode selection
+MINIO_STORAGE_MODE=local  # or 'minio'
+
+# MinIO-specific (only required if MINIO_STORAGE_MODE=minio)
+MINIO_ENDPOINT=s3.amazonaws.com
+MINIO_PORT=443
+MINIO_USE_SSL=true
+MINIO_ACCESS_KEY=your-access-key
+MINIO_SECRET_KEY=your-secret-key
+MINIO_REGION=us-east-1
+MINIO_BUCKET=media
+```
+
+### Storage Key Format
+
+- Pattern: `posts/{timestamp}-{random9chars}.{ext}`
+- Example: `posts/1712345678901-abc123def.jpg`
+- Prevents collisions and allows easy expiry cleanup
+
+### Worker Integration
+
+When worker publishes posts:
+1. Fetch media records (contains storage keys)
+2. Call `getSignedUrl(storageKey)` for each media item
+3. Pass signed URLs to Meta Graph API
+4. Facebook/Instagram handles validation
+
+---
+
 ## Concurrency Rules
 
 - Multiple jobs may execute at same timestamp
@@ -289,6 +361,8 @@ meta-lab/
       posts/[id]/route.ts        ← GET /api/posts/[id]
       accounts/route.ts          ← GET /api/accounts
       jobs/route.ts              ← GET /api/jobs
+      media/upload/route.ts      ← POST /api/media/upload (multipart upload)
+      media/serve/[...storageKey]/route.ts ← GET /api/media/serve/{key} (local mode)
     layout.tsx
     page.tsx
   lib/
@@ -302,10 +376,12 @@ meta-lab/
       client.ts                  ← Graph API client utility
       facebook.ts                ← Facebook publisher
       instagram.ts               ← Instagram publisher
+    minio/
+      client.ts                  ← MinIO client (local or remote storage)
     accounts/
       service.ts                 ← Account queries
     posts/
-      service.ts                 ← Post CRUD (with auto job creation)
+      service.ts                 ← Post CRUD (with auto job creation + media adding)
     jobs/
       service.ts                 ← Job queries & processing
   worker/

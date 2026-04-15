@@ -1,0 +1,108 @@
+version: '3.9'
+
+services:
+  # Next.js Application (API + UI)
+  metalab-app:
+    image: node:20-alpine
+    container_name: metalab-app
+    working_dir: /app
+    volumes:
+      - /data/app:/app
+      - /data/app/node_modules:/app/node_modules  # Prevent volume override
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://poster.yourdomain.com
+      META_GRAPH_BASE_URL: https://graph.facebook.com
+      META_GRAPH_VERSION: v20.0
+      META_GRAPH_TIMEOUT: 30000
+      META_DRY_RUN: "false"
+      WORKER_POLL_INTERVAL: 3000
+      WORKER_MAX_CONCURRENT: 3
+      MINIO_STORAGE_MODE: minio
+      MINIO_ENDPOINT: minio.example.com
+      MINIO_PORT: 443
+      MINIO_USE_SSL: "true"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_REGION: us-east-1
+      MINIO_BUCKET: media
+    ports:
+      - "127.0.0.1:3000:3000"
+    command: npm start
+    restart: unless-stopped
+    depends_on:
+      - metalab-worker
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/accounts"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Worker Process (Job Executor)
+  metalab-worker:
+    image: node:20-alpine
+    container_name: metalab-worker
+    working_dir: /app
+    volumes:
+      - /data/app:/app
+      - /data/app/node_modules:/app/node_modules
+    environment:
+      NODE_ENV: production
+      WORKER_POLL_INTERVAL: 3000
+      WORKER_MAX_CONCURRENT: 3
+      META_DRY_RUN: "false"
+      META_GRAPH_BASE_URL: https://graph.facebook.com
+      META_GRAPH_VERSION: v20.0
+      META_GRAPH_TIMEOUT: 30000
+      MINIO_STORAGE_MODE: minio
+      MINIO_ENDPOINT: minio.example.com
+      MINIO_PORT: 443
+      MINIO_USE_SSL: "true"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_REGION: us-east-1
+      MINIO_BUCKET: media
+    command: npx tsx worker/index.ts
+    restart: unless-stopped
+    depends_on:
+      - metalab-app
+
+  # Optional: MinIO (Self-hosted S3-compatible storage)
+  # Uncomment if self-hosting MinIO instead of using AWS S3
+  # minio:
+  #   image: minio/minio
+  #   container_name: metalab-minio
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  #   volumes:
+  #     - /data/minio/data:/data
+  #   ports:
+  #     - "127.0.0.1:9000:9000"
+  #     - "127.0.0.1:9001:9001"  # Console
+  #   command: server /data --console-address ":9001"
+  #   restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: metalab-nginx
+    volumes:
+      - /data/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /data/nginx/certs:/etc/nginx/certs:ro
+      - /data/nginx/html:/usr/share/nginx/html:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - metalab-app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: metalab-network

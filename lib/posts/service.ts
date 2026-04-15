@@ -206,6 +206,36 @@ export async function updatePostStatus(
 }
 
 /**
+ * Add media to an existing post
+ */
+export async function createMedia(payload: {
+  postId: string;
+  url: string;
+  type: "image" | "video";
+}) {
+  const mediaId = uuid();
+  
+  // Get the max orderIndex for this post
+  const existingMedia = await db
+    .select()
+    .from(media)
+    .where(eq(media.postId, payload.postId));
+  
+  const orderIndex = existingMedia.length;
+
+  const newMedia = {
+    id: mediaId,
+    postId: payload.postId,
+    url: payload.url,
+    type: payload.type,
+    orderIndex,
+  };
+
+  await db.insert(media).values(newMedia);
+  return newMedia;
+}
+
+/**
  * Get account for a post (for publishing)
  */
 export async function getPostAccount(postId: string) {
