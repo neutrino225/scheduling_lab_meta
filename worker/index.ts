@@ -3,7 +3,7 @@
  * Runs as a continuous background process
  * 
  * Usage:
- *   bun worker/index.ts
+ *   npx tsx worker/index.ts
  */
 
 import { processDueJobs } from "./processor";

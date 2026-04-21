@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { v4 as uuid } from "uuid";
 
-import { accounts, posts, media } from "@/drizzle/schema";
+import { accounts, posts, media, jobs } from "@/drizzle/schema";
 import { db } from "@/lib/db";
 
 export async function GET() {
@@ -66,6 +66,17 @@ export async function GET() {
     createdAt: now,
   });
 
+  await db
+    .insert(jobs)
+    .values({
+      id: uuid(),
+      postId: igPostId,
+      runAt: scheduledTime,
+      status: "pending",
+      attempts: 0,
+    })
+    .onConflictDoNothing();
+
   // Add media to Instagram post
   await db.insert(media).values({
     id: igMediaId,
@@ -88,6 +99,17 @@ export async function GET() {
     scheduledAt: scheduledTime,
     createdAt: now,
   });
+
+  await db
+    .insert(jobs)
+    .values({
+      id: uuid(),
+      postId: fbImagePostId,
+      runAt: scheduledTime,
+      status: "pending",
+      attempts: 0,
+    })
+    .onConflictDoNothing();
 
   // Add media to Facebook post
   await db.insert(media).values({

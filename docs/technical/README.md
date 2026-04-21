@@ -55,6 +55,13 @@ Request Flow:
 4. Database operations via Drizzle ORM
 5. Response returned through Nginx
 
+Auth Flow:
+1. User submits credentials to `/api/auth/login`
+2. Server validates against `AUTH_USERNAME`/`AUTH_PASSWORD`
+3. Server sets `meta_lab_session` HttpOnly cookie
+4. `middleware.ts` validates cookie signature and expiry per request
+5. Unauthenticated users are redirected to `/login`
+
 Publishing Flow:
 1. User creates post with scheduled time
 2. Job created in SQLite queue
@@ -88,6 +95,11 @@ Publishing Flow:
 
 **Development:**
 - `GET /api/test-db` — Seed test data (dev-only)
+
+**Authentication:**
+- `POST /api/auth/login` — Create authenticated session cookie
+- `POST /api/auth/logout` — Clear authenticated session
+- `GET /api/auth/session` — Validate active session
 
 **Details:** See [TECHNICAL_REFERENCE.md - API Endpoints](./TECHNICAL_REFERENCE.md#api-endpoints)
 
@@ -279,6 +291,8 @@ minio: (optional)   # S3-compatible storage
   Ports: 9000, 9001
 ```
 
+When running outside Docker locally, use `npm run worker`.
+
 ### Directory Layout
 ```
 /data/
@@ -366,6 +380,9 @@ UPDATE jobs SET status='pending', lockedAt=NULL WHERE id='job-id';
 | File | Purpose |
 |------|---------|
 | `lib/minio/client.ts` | Storage abstraction (local/S3) |
+| `lib/auth/session.ts` | Session token creation and verification |
+| `lib/auth/credentials.ts` | Credential validation from environment |
+| `middleware.ts` | Route-level authentication gate |
 | `app/api/media/upload/route.ts` | Media upload endpoint |
 | `app/api/media/serve/route.ts` | Media download endpoint |
 | `lib/meta/client.ts` | Graph API wrapper |

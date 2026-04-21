@@ -94,6 +94,12 @@ GET /api/media/serve/[key]   Download media
 GET /api/test-db             Seed test data (dev-only)
 ```
 
+### Authentication
+
+- Login page: `/login`
+- Auth APIs: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/session`
+- Route protection: middleware enforces session cookie for app routes
+
 ### Database Tables
 
 - `accounts` — Connected Meta accounts (Facebook Pages, Instagram Business)
@@ -118,6 +124,9 @@ See [DevOps Guide - MinIO Configuration](./devops/DEVOPS_GUIDE.md#minio-configur
 - `META_DRY_RUN` — Dry-run mode (no real Meta API calls)
 - `WORKER_POLL_INTERVAL` — Job polling interval (ms)
 - `MINIO_STORAGE_MODE` — `local` or `minio`
+- `AUTH_USERNAME` — Login username
+- `AUTH_PASSWORD` — Login password
+- `AUTH_SECRET` — HMAC signing secret for session cookie
 - Meta Graph API config: `META_GRAPH_*`
 - MinIO config: `MINIO_*`
 
@@ -133,6 +142,11 @@ See [DevOps Guide - MinIO Configuration](./devops/DEVOPS_GUIDE.md#minio-configur
 ```bash
 npm install
 npm run dev
+```
+
+### Run Worker
+```bash
+npm run worker
 ```
 
 ### Run Tests

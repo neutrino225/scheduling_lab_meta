@@ -98,6 +98,8 @@ meta-lab/
 - ✅ Background job queue with automatic retry
 - ✅ Media storage (local or S3-compatible)
 - ✅ Complete REST API
+- ✅ Session-based authentication (login + route protection)
+- ✅ Chakra UI operator dashboard (dashboard, posts, jobs, accounts, media)
 
 ### Infrastructure
 - ✅ Docker Compose containerization
@@ -254,6 +256,8 @@ npm run dev              # Start dev server
 npm run build            # Build for production
 npm start                # Run production server
 npm run lint             # Run ESLint
+npm run worker           # Start worker process
+npm run worker:dev       # Start worker in watch mode
 ```
 
 ### Docker
@@ -331,11 +335,9 @@ UPDATE jobs SET status='pending', lockedAt=NULL WHERE id='job-id';
 - Comprehensive documentation
 
 ### In Progress ⏳
-- Frontend UI (React components)
-- Dashboard and forms
-- Post creation interface
-- Media gallery
-- Account management
+- Hardening auth/session configuration for production
+- Replacing static media page mock data with live media list API
+- Adding deeper UI workflows (post detail/edit actions)
 
 ### Planned 🔮
 - User authentication

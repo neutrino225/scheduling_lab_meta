@@ -4,7 +4,17 @@ import { listAccounts } from "@/lib/accounts/service";
 export async function GET() {
   try {
     const accounts = await listAccounts();
-    return apiSuccess(accounts);
+    const sanitizedAccounts = accounts.map((account) => {
+      const token = account.accessToken || "";
+      const suffix = token.length >= 4 ? token.slice(-4) : token;
+
+      return {
+        ...account,
+        accessToken: token ? `***${suffix}` : null,
+      };
+    });
+
+    return apiSuccess(sanitizedAccounts);
   } catch (error) {
     console.error("GET /api/accounts error:", error);
     return apiError(

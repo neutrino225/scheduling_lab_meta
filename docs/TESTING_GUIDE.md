@@ -59,6 +59,11 @@ NODE_ENV="development"
 # Next.js
 NEXT_PUBLIC_API_URL="http://localhost:3000"
 
+# Auth (dashboard login)
+AUTH_USERNAME="test"
+AUTH_PASSWORD="test123"
+AUTH_SECRET="meta-lab-local-dev-secret"
+
 # Worker process
 WORKER_POLL_INTERVAL_MS="5000"
 WORKER_LOCK_TIMEOUT_MS="30000"
@@ -80,6 +85,9 @@ FACEBOOK_APP_ID="your-app-id-here"
 FACEBOOK_APP_SECRET="your-app-secret-here"
 NODE_ENV="development"
 NEXT_PUBLIC_API_URL="http://localhost:3000"
+AUTH_USERNAME="test"
+AUTH_PASSWORD="test123"
+AUTH_SECRET="meta-lab-local-dev-secret"
 WORKER_POLL_INTERVAL_MS="5000"
 WORKER_LOCK_TIMEOUT_MS="30000"
 EOF
@@ -271,6 +279,14 @@ bun run dev
 ```bash
 curl http://localhost:3000
 ```
+
+### Step 3.1a: Login to Dashboard
+
+Open `http://localhost:3000/login` and sign in using:
+- Username: value from `AUTH_USERNAME` (default `test`)
+- Password: value from `AUTH_PASSWORD` (default `test123`)
+
+After login, protected routes like `/`, `/posts`, and `/jobs` should be accessible.
 
 ---
 
@@ -577,7 +593,7 @@ run();
 **Terminal 2** (separate from Next.js):
 
 ```bash
-bun run worker/index.ts
+npm run worker
 ```
 
 **Expected output**:
@@ -911,7 +927,7 @@ bun run dev
 curl http://localhost:3000/api/test-db
 
 # 5. Start worker (Terminal 2):
-bun run worker/index.ts
+npm run worker
 
 # 6. Test API (Terminal 3):
 curl http://localhost:3000/api/accounts
@@ -931,7 +947,7 @@ curl http://localhost:3000/api/jobs?summary=true
          ↓ API Requests
 ┌──────────────────────────────────────────────┐
 │ Terminal 2: Worker Process                   │
-│ $ bun run worker/index.ts                    │
+│ $ npm run worker                              │
 │ Polls jobs every 5s, processes async         │
 └──────────────────────────────────────────────┘
          ↓ DB Updates

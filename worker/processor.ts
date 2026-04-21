@@ -3,23 +3,23 @@
  * Handles retry policy and error recording
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { jobs, posts } from "@/drizzle/schema";
 import { getPost, getPostAccount, updatePostStatus } from "@/lib/posts/service";
 import { publishFacebookPost } from "@/lib/meta/facebook";
 import { publishInstagramPost } from "@/lib/meta/instagram";
 import { getPendingJobs } from "@/lib/jobs/service";
+import { getSignedUrl } from "@/lib/minio/client";
 
 /**
  * Retry policy configuration
  */
 const RETRY_POLICY = {
   maxAttempts: 3,
-  backoffMs: {
-    1: 2 * 60 * 1000, // 2 minutes after first failure
-    2: 5 * 60 * 1000, // 5 minutes after second failure
-    // After attempt 2 failure, mark as failed (no retry 3)
+  backoffByAttempt: {
+    1: 2 * 60 * 1000,
+    2: 5 * 60 * 1000,
   },
 };
 
@@ -51,34 +51,27 @@ async function updateJobStatus(
  */
 async function lockJob(jobId: string, now: number): Promise<boolean> {
   try {
-    const job = await db
-      .select()
-      .from(jobs)
-      .where(eq(jobs.id, jobId));
+    const lockTimeoutMs = 30000;
+    const expiredLockTime = now - lockTimeoutMs;
 
-    if (!job.length) {
-      return false;
-    }
-
-    const currentJob = job[0];
-
-    // Check if already locked (and not expired)
-    const lockTimeoutMs = 30000; // 30 seconds
-    if (
-      currentJob.lockedAt &&
-      now - currentJob.lockedAt < lockTimeoutMs
-    ) {
-      return false; // Still locked
-    }
-
-    // Attempt atomic update: set lock and change status to "running"
-    await db
+    const updated = await db
       .update(jobs)
       .set({
         status: "running",
         lockedAt: now,
       })
-      .where(eq(jobs.id, jobId));
+      .where(
+        and(
+          eq(jobs.id, jobId),
+          eq(jobs.status, "pending"),
+          or(isNull(jobs.lockedAt), lte(jobs.lockedAt, expiredLockTime))
+        )
+      )
+      .returning({ id: jobs.id });
+
+    if (!updated.length) {
+      return false;
+    }
 
     return true;
   } catch (error) {
@@ -90,8 +83,10 @@ async function lockJob(jobId: string, now: number): Promise<boolean> {
 /**
  * Reschedule a job with backoff
  */
-function getRetryRunAt(currentAttempt: number): number | null {
-  const backoff = RETRY_POLICY.backoffMs[currentAttempt as keyof typeof RETRY_POLICY.backoffMs];
+function getRetryRunAt(nextAttempt: number): number | null {
+  const backoff = RETRY_POLICY.backoffByAttempt[
+    nextAttempt as keyof typeof RETRY_POLICY.backoffByAttempt
+  ];
   if (!backoff) {
     return null; // No more retries
   }
@@ -107,31 +102,49 @@ async function handleJobFailure(
   error: string,
   currentAttempt: number
 ) {
-  // Check if we should retry
-  if (currentAttempt < RETRY_POLICY.maxAttempts) {
-    // Schedule retry
-    const nextRunAt = getRetryRunAt(currentAttempt);
-    if (nextRunAt) {
-      await db
-        .update(jobs)
-        .set({
-          status: "pending",
-          runAt: nextRunAt,
-          attempts: currentAttempt + 1,
-          lastError: error,
-          lockedAt: null,
-        })
-        .where(eq(jobs.id, jobId));
+  const nextAttempt = currentAttempt + 1;
+  const nextRunAt = getRetryRunAt(nextAttempt);
 
-      // Update post error but keep as scheduled (for retry)
-      await updatePostStatus(postId, "scheduled", error);
-      return;
-    }
+  if (nextRunAt && nextAttempt < RETRY_POLICY.maxAttempts) {
+    await db
+      .update(jobs)
+      .set({
+        status: "pending",
+        runAt: nextRunAt,
+        attempts: nextAttempt,
+        lastError: error,
+        lockedAt: null,
+      })
+      .where(eq(jobs.id, jobId));
+
+    await updatePostStatus(postId, "scheduled", error);
+    return;
   }
 
-  // No more retries - mark as failed
-  await updateJobStatus(jobId, "failed", error);
+  // Final attempt failed.
+  await db
+    .update(jobs)
+    .set({
+      status: "failed",
+      attempts: nextAttempt,
+      lastError: error,
+      lockedAt: null,
+    })
+    .where(eq(jobs.id, jobId));
+
   await updatePostStatus(postId, "failed", error);
+}
+
+async function resolvePublishableMediaUrl(storedUrl: string | null | undefined) {
+  if (!storedUrl) {
+    return undefined;
+  }
+
+  if (storedUrl.startsWith("http://") || storedUrl.startsWith("https://")) {
+    return storedUrl;
+  }
+
+  return getSignedUrl(storedUrl);
 }
 
 /**
@@ -215,7 +228,9 @@ export async function processJob(jobId: string): Promise<boolean> {
     // Determine media type if media exists
     const hasMedia = postData.media && postData.media.length > 0;
     const mediaType = hasMedia ? (postData.media[0].type as "image" | "video") : undefined;
-    const mediaUrl = hasMedia ? postData.media[0].url : undefined;
+    const mediaUrl = hasMedia
+      ? await resolvePublishableMediaUrl(postData.media[0].url)
+      : undefined;
 
     try {
       // Publish based on platform

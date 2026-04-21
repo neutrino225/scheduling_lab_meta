@@ -6,9 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "worker": "tsx worker/index.ts",
+    "worker:dev": "tsx watch worker/index.ts"
   },
   "dependencies": {
+    "@chakra-ui/react": "^3.34.0",
+    "@emotion/react": "^11.14.0",
     "better-sqlite3": "^12.9.0",
     "drizzle-orm": "^0.45.2",
     "minio": "^8.0.0",
@@ -27,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   },
   "ignoreScripts": [

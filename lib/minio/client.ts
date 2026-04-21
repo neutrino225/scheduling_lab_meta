@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import type { Client as MinioClient } from "minio";
 
 /**
  * MinIO Client Configuration
@@ -145,9 +146,9 @@ export function getLocalStoragePath(storageKey: string): string {
  * ==================== MINIO STORAGE (Production) ====================
  */
 
-let minioClient: any = null;
+let minioClient: MinioClient | null = null;
 
-async function initMinIOClient(): Promise<any> {
+async function initMinIOClient(): Promise<MinioClient> {
   if (minioClient) {
     return minioClient;
   }

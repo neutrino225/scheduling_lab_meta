@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  uploadToStorage,
-  generateStorageKey,
-} from "@/lib/minio/client";
+import { uploadToStorage } from "@/lib/minio/client";
 import { createMedia } from "@/lib/posts/service";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
