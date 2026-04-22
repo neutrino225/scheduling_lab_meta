@@ -1,6 +1,8 @@
-# Meta Lab
+# Scheduling Lab Meta
 
 A self-hosted social media scheduling system for Facebook Pages and Instagram Business accounts.
+
+Repository: `git@github.com:neutrino225/scheduling_lab_meta.git`
 
 **Status:** Production Ready ✅
 

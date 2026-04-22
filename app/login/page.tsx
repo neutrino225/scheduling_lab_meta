@@ -14,12 +14,26 @@ import {
   Text,
 } from "@chakra-ui/react";
 
+declare global {
+  interface Window {
+    FB?: {
+      getLoginStatus: (callback: (response: { status: string; authResponse?: { accessToken: string } }) => void) => void;
+      login: (
+        callback: (response: { status: string; authResponse?: { accessToken: string } }) => void,
+        options?: { scope?: string }
+      ) => void;
+    };
+    checkLoginState?: () => void;
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
   const [nextPath, setNextPath] = useState("/");
 
   useEffect(() => {
@@ -27,6 +41,92 @@ export default function LoginPage() {
     const next = params.get("next") || "/";
     setNextPath(next);
   }, []);
+
+  useEffect(() => {
+    const statusChangeCallback = (response: { status: string; authResponse?: { accessToken: string } }) => {
+      if (response.status !== "connected" || !response.authResponse?.accessToken) {
+        return;
+      }
+
+      void loginWithFacebookAccessToken(response.authResponse.accessToken);
+    };
+
+    window.checkLoginState = () => {
+      if (!window.FB) {
+        return;
+      }
+
+      window.FB.getLoginStatus((response) => {
+        statusChangeCallback(response);
+      });
+    };
+
+    const timer = window.setTimeout(() => {
+      if (!window.FB) {
+        return;
+      }
+
+      window.FB.getLoginStatus((response) => {
+        statusChangeCallback(response);
+      });
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+      delete window.checkLoginState;
+    };
+  }, []);
+
+  async function loginWithFacebookAccessToken(accessToken: string) {
+    setError(null);
+    setFacebookLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/facebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { message?: string };
+        setError(payload.message || "Facebook login failed");
+        return;
+      }
+
+      router.push(nextPath);
+      router.refresh();
+    } catch {
+      setError("Network error while signing in with Facebook.");
+    } finally {
+      setFacebookLoading(false);
+    }
+  }
+
+  function onFacebookLogin() {
+    if (!window.FB) {
+      setError("Facebook SDK not ready. Refresh and try again.");
+      return;
+    }
+
+    setError(null);
+    setFacebookLoading(true);
+
+    window.FB.login(
+      (response) => {
+        if (response.status !== "connected" || !response.authResponse?.accessToken) {
+          setFacebookLoading(false);
+          setError("Facebook login was not completed.");
+          return;
+        }
+
+        void loginWithFacebookAccessToken(response.authResponse.accessToken);
+      },
+      {
+        scope: "pages_show_list,pages_read_engagement,pages_manage_posts",
+      }
+    );
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,6 +211,25 @@ export default function LoginPage() {
               >
                 Login
               </Button>
+
+              <Box borderTopWidth="1px" borderColor="border.default" />
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onFacebookLogin}
+                loading={facebookLoading}
+                aria-label="Sign in with Facebook"
+              >
+                Continue with Facebook
+              </Button>
+
+              <Box
+                dangerouslySetInnerHTML={{
+                  __html:
+                    '<fb:login-button onlogin="checkLoginState();" scope="pages_show_list,pages_read_engagement,pages_manage_posts" size="large"></fb:login-button>',
+                }}
+              />
             </Stack>
           </form>
         </Card.Body>
