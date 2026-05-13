@@ -35,13 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!postId) {
-      return NextResponse.json(
-        { error: "postId is required" },
-        { status: 400 }
-      );
-    }
-
     if (!mediaType || !["image", "video"].includes(mediaType)) {
       return NextResponse.json(
         { error: "type must be 'image' or 'video'" },
@@ -71,30 +64,24 @@ export async function POST(request: NextRequest) {
       fileName: file.name,
       fileBuffer,
       contentType: file.type,
-      metadata: {
-        "X-Amz-Meta-PostId": postId,
-        "X-Amz-Meta-UploadedAt": new Date().toISOString(),
-      },
     });
 
-    // Create media record in database
-    const media = await createMedia({
-      postId,
-      url: storageKey, // Store storage key, not presigned URL
-      type: mediaType as "image" | "video",
-    });
+    // If postId provided, create media record in database
+    let mediaRecord = null;
+    if (postId) {
+      mediaRecord = await createMedia({
+        postId,
+        url: storageKey,
+        type: mediaType as "image" | "video",
+      });
+    }
 
     return NextResponse.json(
       {
         success: true,
-        media: {
-          id: media.id,
-          postId: media.postId,
-          url: media.url,
-          type: media.type,
-          storageKey,
-          publicUrl: url, // Return presigned/public URL for frontend
-        },
+        key: storageKey,
+        publicUrl: url,
+        media: mediaRecord,
       },
       { status: 201 }
     );

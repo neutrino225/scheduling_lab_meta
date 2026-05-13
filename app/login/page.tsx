@@ -1,31 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Box,
-  Button,
-  Card,
-  Field,
-  Heading,
-  Input,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
-
-declare global {
-  interface Window {
-    FB?: {
-      getLoginStatus: (callback: (response: { status: string; authResponse?: { accessToken: string } }) => void) => void;
-      login: (
-        callback: (response: { status: string; authResponse?: { accessToken: string } }) => void,
-        options?: { scope?: string }
-      ) => void;
-    };
-    checkLoginState?: () => void;
-  }
-}
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,120 +10,28 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [facebookLoading, setFacebookLoading] = useState(false);
-  const [nextPath, setNextPath] = useState("/");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const next = params.get("next") || "/";
-    setNextPath(next);
+    setMounted(true);
   }, []);
-
-  useEffect(() => {
-    const statusChangeCallback = (response: { status: string; authResponse?: { accessToken: string } }) => {
-      if (response.status !== "connected" || !response.authResponse?.accessToken) {
-        return;
-      }
-
-      void loginWithFacebookAccessToken(response.authResponse.accessToken);
-    };
-
-    window.checkLoginState = () => {
-      if (!window.FB) {
-        return;
-      }
-
-      window.FB.getLoginStatus((response) => {
-        statusChangeCallback(response);
-      });
-    };
-
-    const timer = window.setTimeout(() => {
-      if (!window.FB) {
-        return;
-      }
-
-      window.FB.getLoginStatus((response) => {
-        statusChangeCallback(response);
-      });
-    }, 400);
-
-    return () => {
-      window.clearTimeout(timer);
-      delete window.checkLoginState;
-    };
-  }, []);
-
-  async function loginWithFacebookAccessToken(accessToken: string) {
-    setError(null);
-    setFacebookLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/facebook", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json()) as { message?: string };
-        setError(payload.message || "Facebook login failed");
-        return;
-      }
-
-      router.push(nextPath);
-      router.refresh();
-    } catch {
-      setError("Network error while signing in with Facebook.");
-    } finally {
-      setFacebookLoading(false);
-    }
-  }
-
-  function onFacebookLogin() {
-    if (!window.FB) {
-      setError("Facebook SDK not ready. Refresh and try again.");
-      return;
-    }
-
-    setError(null);
-    setFacebookLoading(true);
-
-    window.FB.login(
-      (response) => {
-        if (response.status !== "connected" || !response.authResponse?.accessToken) {
-          setFacebookLoading(false);
-          setError("Facebook login was not completed.");
-          return;
-        }
-
-        void loginWithFacebookAccessToken(response.authResponse.accessToken);
-      },
-      {
-        scope: "pages_show_list,pages_read_engagement,pages_manage_posts",
-      }
-    );
-  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-
       if (!response.ok) {
-        const payload = (await response.json()) as { message?: string };
+        const payload = await response.json() as { message?: string };
         setError(payload.message || "Unable to login");
         return;
       }
-
-      router.push(nextPath);
+      router.push("/");
       router.refresh();
     } catch {
       setError("Network error. Please try again.");
@@ -155,85 +40,204 @@ export default function LoginPage() {
     }
   }
 
-  return (
-    <Box
-      minH="100vh"
-      display="grid"
-      placeItems="center"
-      px="4"
-      bg="bg.canvas"
-    >
-      <Card.Root w="full" maxW="md" shadow="panel" borderRadius="card" bg="bg.surface">
-        <Card.Header pb="2">
-          <Heading size="lg" fontFamily="heading">
-            Login to Meta Lab
-          </Heading>
-          <Text color="text.muted" fontSize="sm" mt="1">
-            Single-operator access for scheduling and publishing.
-          </Text>
-        </Card.Header>
-        <Card.Body>
-          <form onSubmit={onSubmit}>
-            <Stack gap="4">
-              <Field.Root required>
-                <Field.Label>Username</Field.Label>
-                <Input
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="Enter username"
-                  aria-label="Username"
-                />
-              </Field.Root>
+  if (!mounted) return null;
 
-              <Field.Root required>
-                <Field.Label>Password</Field.Label>
-                <Input
+  return (
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      background: "var(--bg-canvas)",
+      color: "var(--text-primary)",
+      fontFamily: "var(--font-body)"
+    }}>
+      {/* Theme Toggle Floating */}
+      <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 50 }}>
+        <ThemeToggle />
+      </div>
+
+      <div style={{
+        display: "flex",
+        width: "100%",
+        flexDirection: "row"
+      }} className="login-container">
+        
+        {/* Left Side: Form */}
+        <div style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2rem",
+          background: "var(--bg-canvas)"
+        }}>
+          <div style={{ width: "100%", maxWidth: "360px" }}>
+            <h1 style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "2rem",
+              fontWeight: 600,
+              letterSpacing: "-0.04em",
+              marginBottom: "2.5rem",
+              color: "var(--text-primary)"
+            }}>
+              Sign In
+            </h1>
+
+            <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Username"
+                  required
+                  autoComplete="username"
+                  style={{
+                    width: "100%",
+                    height: "44px",
+                    padding: "0 1rem",
+                    borderRadius: "10px",
+                    border: "1px solid var(--border-default)",
+                    background: "var(--bg-subtle)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.9375rem",
+                    fontFamily: "inherit",
+                    transition: "all 0.2s ease",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <input
                   type="password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Enter password"
-                  aria-label="Password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  required
+                  autoComplete="current-password"
+                  style={{
+                    width: "100%",
+                    height: "44px",
+                    padding: "0 1rem",
+                    borderRadius: "10px",
+                    border: "1px solid var(--border-default)",
+                    background: "var(--bg-subtle)",
+                    color: "var(--text-primary)",
+                    fontSize: "0.9375rem",
+                    fontFamily: "inherit",
+                    transition: "all 0.2s ease",
+                    boxSizing: "border-box"
+                  }}
                 />
-              </Field.Root>
+              </div>
 
-              {error ? (
-                <Text color="status.danger" fontSize="sm">
+              {error && (
+                <div style={{
+                  color: "var(--status-danger)",
+                  fontSize: "0.8125rem",
+                  fontWeight: 500
+                }}>
                   {error}
-                </Text>
-              ) : null}
+                </div>
+              )}
 
-              <Button
+              <button
                 type="submit"
-                colorPalette="brand"
-                variant="solid"
-                loading={loading}
-                aria-label="Sign in to Meta Lab"
-              >
-                Login
-              </Button>
-
-              <Box borderTopWidth="1px" borderColor="border.default" />
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onFacebookLogin}
-                loading={facebookLoading}
-                aria-label="Sign in with Facebook"
-              >
-                Continue with Facebook
-              </Button>
-
-              <Box
-                dangerouslySetInnerHTML={{
-                  __html:
-                    '<fb:login-button onlogin="checkLoginState();" scope="pages_show_list,pages_read_engagement,pages_manage_posts" size="large"></fb:login-button>',
+                disabled={loading}
+                style={{
+                  height: "44px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: loading ? "var(--text-muted)" : "var(--accent-primary)",
+                  color: "var(--bg-canvas)",
+                  fontSize: "0.9375rem",
+                  fontWeight: 600,
+                  cursor: loading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s ease",
+                  marginTop: "0.75rem"
                 }}
-              />
-            </Stack>
-          </form>
-        </Card.Body>
-      </Card.Root>
-    </Box>
+              >
+                {loading ? "Verifying..." : "Continue"}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Right Side: Branding */}
+        <div style={{
+          flex: 1,
+          background: "var(--bg-surface)",
+          borderLeft: "1px solid var(--border-default)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: "4rem",
+          position: "relative",
+          overflow: "hidden"
+        }} className="branding-side">
+          {/* Background Image with Overlay */}
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: "url('https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=2070&auto=format&fit=crop')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: 0.15,
+            filter: "grayscale(100%) brightness(0.5)"
+          }} />
+          
+          <div style={{ maxWidth: "400px", position: "relative", zIndex: 1 }}>
+            <div style={{ 
+              width: "40px", 
+              height: "40px", 
+              borderRadius: "50%", 
+              background: "var(--accent-primary)",
+              marginBottom: "2rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--bg-canvas)",
+              boxShadow: "0 0 20px rgba(217, 222, 232, 0.2)"
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /><polyline points="16 16 12 12 8 16" />
+              </svg>
+            </div>
+            <h2 style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "1.75rem",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              marginBottom: "0.75rem",
+              color: "var(--text-primary)"
+            }}>
+              The Publishing Desk.
+            </h2>
+            <p style={{
+              fontSize: "1rem",
+              lineHeight: "1.6",
+              color: "var(--text-muted)",
+              margin: 0
+            }}>
+              Control your Meta presence from one place. Simple, file-based, and operator-focused.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @media (max-width: 860px) {
+          .login-container {
+            flex-direction: column !important;
+          }
+          .branding-side {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

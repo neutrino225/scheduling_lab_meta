@@ -1,220 +1,141 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "@/components/navigation/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { getApiData } from "@/lib/client/api";
-import { Job, JobSummary } from "@/lib/client/types";
-import {
-  Badge,
-  Box,
-  Card,
-  Grid,
-  Heading,
-  HStack,
-  NativeSelect,
-  Spinner,
-  Stack,
-  Table,
-  Text,
-} from "@chakra-ui/react";
+import type { Job, JobSummary } from "@/lib/client/types";
+import { Select } from "@/components/primitives";
+import "@/app/components.css";
 
-function jobStatusBadge(jobStatus: string) {
-  switch (jobStatus) {
-    case "done":
-      return { bg: "status.successSurface", color: "status.success", label: "Done" };
-    case "pending":
-      return { bg: "status.infoSurface", color: "status.info", label: "Pending" };
-    case "running":
-      return { bg: "status.warningSurface", color: "status.warning", label: "Running" };
-    case "failed":
-      return { bg: "status.dangerSurface", color: "status.danger", label: "Failed" };
-    default:
-      return { bg: "bg.subtle", color: "text.muted", label: jobStatus };
-  }
+function badgeClass(s: string) {
+  const m: Record<string, string> = {
+    done: "badge-success", pending: "badge-info",
+    running: "badge-warning", failed: "badge-danger",
+  };
+  return m[s] || "badge-muted";
 }
 
-function formatDateTime(timestamp: number | null) {
-  if (!timestamp) {
-    return "-";
-  }
-
-  return new Date(timestamp).toLocaleString();
+function fmtDate(ts: number | null) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export default function JobsPage() {
   const [summary, setSummary] = useState<JobSummary | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-
-    async function loadData() {
+    async function load() {
       setLoading(true);
-      setError(null);
-
       const params = new URLSearchParams({ limit: "100" });
-
-      if (status) {
-        params.set("status", status);
-      }
-
+      if (status) params.set("status", status);
       try {
-        const [summaryData, jobsData] = await Promise.all([
+        const [s, j] = await Promise.all([
           getApiData<{ summary: JobSummary }>("/api/jobs?summary=true"),
-          getApiData<Job[]>(`/api/jobs?${params.toString()}`),
+          getApiData<Job[]>(`/api/jobs?${params}`),
         ]);
-
-        if (!active) {
-          return;
-        }
-
-        setSummary(summaryData.summary);
-        setJobs(jobsData);
-      } catch (err) {
-        if (!active) {
-          return;
-        }
-
-        setError(err instanceof Error ? err.message : "Failed to fetch jobs");
+        if (!active) return;
+        setSummary(s.summary);
+        setJobs(j);
+      } catch {
+        // ignore
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
-
-    void loadData();
-
-    return () => {
-      active = false;
-    };
+    load();
+    return () => { active = false; };
   }, [status]);
 
-  const jobStats = [
-    { label: "Pending", value: summary?.pending || 0 },
-    { label: "Running", value: summary?.running || 0 },
-    { label: "Done", value: summary?.done || 0 },
-    { label: "Failed", value: summary?.failed || 0 },
-  ];
+  const jobStats = summary
+    ? [
+        { label: "Pending", value: summary.pending },
+        { label: "Running", value: summary.running },
+        { label: "Done", value: summary.done },
+        { label: "Failed", value: summary.failed },
+      ]
+    : [];
 
   return (
     <AppShell>
-      <Stack gap="6">
-        <Heading size="xl" fontFamily="heading">
-          Jobs
-        </Heading>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", margin: 0 }}>Jobs</h1>
 
-        <Grid templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="4">
-          {jobStats.map((item) => (
-            <Card.Root key={item.label} borderRadius="card" bg="bg.surface" shadow="panel">
-              <Card.Body>
-                <Text color="text.muted" fontSize="sm">
-                  {item.label}
-                </Text>
-                <Heading size="xl" fontFamily="heading" mt="1">
-                  {String(item.value)}
-                </Heading>
-              </Card.Body>
-            </Card.Root>
-          ))}
-        </Grid>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+        gap: "0.75rem", margin: "1rem 0",
+      }}>
+        {loading
+          ? [1, 2, 3, 4].map((i) => (
+              <div key={i} className="stat-card">
+                <div className="skeleton skeleton-text" style={{ width: "50px" }} />
+                <div className="skeleton" style={{ height: "24px", width: "30px", marginTop: "8px" }} />
+              </div>
+            ))
+          : jobStats.map((s) => (
+              <div key={s.label} className="stat-card">
+                <div className="stat-label">{s.label}</div>
+                <div className="stat-value" style={{ fontSize: "1.5rem" }}>{s.value}</div>
+              </div>
+            ))
+        }
+      </div>
 
-        <Card.Root borderRadius="card" bg="bg.surface" shadow="panel">
-          <Card.Header>
-            <HStack justify="space-between" flexWrap="wrap" gap="3">
-              <Heading size="md" fontFamily="heading">
-                Queue Activity
-              </Heading>
-              <NativeSelect.Root minW="180px" size="sm">
-                <NativeSelect.Field
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value)}
-                  aria-label="Filter jobs by status"
-                >
-                  <option value="">All statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="running">Running</option>
-                  <option value="done">Done</option>
-                  <option value="failed">Failed</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-            </HStack>
-          </Card.Header>
-          <Card.Body>
-            {loading ? (
-              <HStack color="text.muted" mb="4">
-                <Spinner size="sm" />
-                <Text>Loading jobs...</Text>
-              </HStack>
-            ) : null}
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+        <div style={{ minWidth: "140px" }}>
+          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="running">Running</option>
+            <option value="done">Done</option>
+            <option value="failed">Failed</option>
+          </Select>
+        </div>
+      </div>
 
-            {error ? (
-              <Text color="status.danger" mb="4">
-                {error}
-              </Text>
-            ) : null}
-
-            <Box overflowX="auto">
-              <Table.Root size="sm" minW="900px">
-                <Table.Header>
-                  <Table.Row>
-                    <Table.ColumnHeader>Job ID</Table.ColumnHeader>
-                    <Table.ColumnHeader>Post ID</Table.ColumnHeader>
-                    <Table.ColumnHeader>Status</Table.ColumnHeader>
-                    <Table.ColumnHeader>Attempts</Table.ColumnHeader>
-                    <Table.ColumnHeader>Run At</Table.ColumnHeader>
-                    <Table.ColumnHeader>Last Error</Table.ColumnHeader>
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {jobs.map((job) => {
-                    const badge = jobStatusBadge(job.status);
-
-                    return (
-                      <Table.Row key={job.id}>
-                        <Table.Cell fontFamily="mono" fontSize="xs">
-                          {job.id}
-                        </Table.Cell>
-                        <Table.Cell fontFamily="mono" fontSize="xs">
-                          {job.postId}
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Badge
-                            px="2"
-                            py="0.5"
-                            borderRadius="md"
-                            bg={badge.bg}
-                            color={badge.color}
-                            textTransform="none"
-                            fontWeight="600"
-                          >
-                            {badge.label}
-                          </Badge>
-                        </Table.Cell>
-                        <Table.Cell>{job.attempts}</Table.Cell>
-                        <Table.Cell>{formatDateTime(job.runAt)}</Table.Cell>
-                        <Table.Cell maxW="260px" whiteSpace="normal" color="text.muted">
-                          {job.lastError || "-"}
-                        </Table.Cell>
-                      </Table.Row>
-                    );
-                  })}
-                </Table.Body>
-              </Table.Root>
-            </Box>
-
-            {!loading && jobs.length === 0 ? (
-              <Text color="text.muted" fontSize="sm" mt="3">
-                No jobs found for this filter.
-              </Text>
-            ) : null}
-          </Card.Body>
-        </Card.Root>
-      </Stack>
+      <div className="card">
+        {loading ? (
+          <div style={{ padding: "1.25rem" }}>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="skeleton skeleton-row" />
+            ))}
+          </div>
+        ) : jobs.length === 0 ? (
+          <p style={{ padding: "1.25rem", color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>No jobs found.</p>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Post ID</th>
+                  <th>Status</th>
+                  <th>Attempts</th>
+                  <th>Run At</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs.map((job) => (
+                  <tr key={job.id}>
+                    <td className="mono">{job.id.slice(0, 8)}</td>
+                    <td className="mono">{job.postId.slice(0, 8)}</td>
+                    <td><span className={`badge ${badgeClass(job.status)}`}>{job.status}</span></td>
+                    <td>{job.attempts}</td>
+                    <td style={{ fontSize: "0.8125rem" }}>{fmtDate(job.runAt)}</td>
+                    <td style={{ maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--text-muted)", fontSize: "0.8125rem" }}>
+                      {job.lastError || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </AppShell>
   );
 }

@@ -1,237 +1,113 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "@/components/navigation/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { getApiData } from "@/lib/client/api";
-import { Post } from "@/lib/client/types";
-import {
-  Badge,
-  Box,
-  Button,
-  Card,
-  Heading,
-  HStack,
-  Input,
-  NativeSelect,
-  Spinner,
-  Stack,
-  Table,
-  Text,
-} from "@chakra-ui/react";
+import type { Post } from "@/lib/client/types";
+import { Select } from "@/components/primitives";
+import "@/app/components.css";
 
-function statusBadge(postStatus: string) {
-  switch (postStatus) {
-    case "published":
-      return { bg: "status.successSurface", color: "status.success", label: "Published" };
-    case "scheduled":
-      return { bg: "status.infoSurface", color: "status.info", label: "Scheduled" };
-    case "processing":
-      return { bg: "status.warningSurface", color: "status.warning", label: "Processing" };
-    case "failed":
-      return { bg: "status.dangerSurface", color: "status.danger", label: "Failed" };
-    default:
-      return { bg: "bg.subtle", color: "text.muted", label: "Draft" };
-  }
+function badgeClass(s: string) {
+  const m: Record<string, string> = {
+    published: "badge-success", draft: "badge-muted", scheduled: "badge-info",
+    processing: "badge-warning", failed: "badge-danger",
+  };
+  return m[s] || "badge-muted";
 }
 
-function formatDateTime(timestamp: number | null) {
-  if (!timestamp) {
-    return "Not scheduled";
-  }
-
-  return new Date(timestamp).toLocaleString();
+function fmtDate(ts: number | null) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 export default function PostsPage() {
   const [rows, setRows] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>("");
-  const [platform, setPlatform] = useState<string>("");
-  const [accountId, setAccountId] = useState<string>("");
+  const [status, setStatus] = useState("");
+  const [platform, setPlatform] = useState("");
 
   useEffect(() => {
     let active = true;
-
-    async function loadPosts() {
+    async function load() {
       setLoading(true);
-      setError(null);
-
       const params = new URLSearchParams({ limit: "100" });
-
-      if (status) {
-        params.set("status", status);
-      }
-
-      if (platform) {
-        params.set("platform", platform);
-      }
-
-      if (accountId) {
-        params.set("accountId", accountId);
-      }
-
+      if (status) params.set("status", status);
+      if (platform) params.set("platform", platform);
       try {
-        const data = await getApiData<Post[]>(`/api/posts/list?${params.toString()}`);
-
-        if (!active) {
-          return;
-        }
-
-        setRows(data);
-      } catch (err) {
-        if (!active) {
-          return;
-        }
-
-        setError(err instanceof Error ? err.message : "Failed to fetch posts");
+        const data = await getApiData<Post[]>(`/api/posts/list?${params}`);
+        if (active) setRows(data);
+      } catch {
+        // ignore
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
-
-    void loadPosts();
-
-    return () => {
-      active = false;
-    };
-  }, [status, platform, accountId]);
-
-  function resetFilters() {
-    setStatus("");
-    setPlatform("");
-    setAccountId("");
-  }
+    load();
+    return () => { active = false; };
+  }, [status, platform]);
 
   return (
     <AppShell>
-      <Stack gap="6">
-        <Heading size="xl" fontFamily="heading">
-          Posts
-        </Heading>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", margin: 0 }}>Posts</h1>
 
-        <Card.Root borderRadius="card" bg="bg.surface" shadow="panel">
-          <Card.Header>
-            <Heading size="md" fontFamily="heading">
-              Recent Posts
-            </Heading>
-            <Text color="text.muted" fontSize="sm">Live data from `/api/posts/list`.</Text>
-          </Card.Header>
-          <Card.Body>
-            <HStack gap="3" mb="4" flexWrap="wrap" align="stretch">
-              <NativeSelect.Root minW="180px" size="sm">
-                <NativeSelect.Field
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value)}
-                  aria-label="Filter by post status"
-                >
-                  <option value="">All statuses</option>
-                  <option value="draft">Draft</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="processing">Processing</option>
-                  <option value="published">Published</option>
-                  <option value="failed">Failed</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
+      <div style={{ display: "flex", gap: "0.5rem", margin: "1rem 0", flexWrap: "wrap" }}>
+        <div style={{ minWidth: "140px" }}>
+          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="processing">Processing</option>
+            <option value="published">Published</option>
+            <option value="failed">Failed</option>
+          </Select>
+        </div>
+        <div style={{ minWidth: "140px" }}>
+          <Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+            <option value="">All platforms</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+          </Select>
+        </div>
+      </div>
 
-              <NativeSelect.Root minW="180px" size="sm">
-                <NativeSelect.Field
-                  value={platform}
-                  onChange={(event) => setPlatform(event.target.value)}
-                  aria-label="Filter by platform"
-                >
-                  <option value="">All platforms</option>
-                  <option value="facebook">Facebook</option>
-                  <option value="instagram">Instagram</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-
-              <Input
-                size="sm"
-                placeholder="Filter by account ID"
-                value={accountId}
-                onChange={(event) => setAccountId(event.target.value)}
-                maxW="280px"
-                aria-label="Filter by account ID"
-              />
-
-              <Button
-                size="sm"
-                variant="subtle"
-                colorPalette="neutral"
-                onClick={resetFilters}
-                aria-label="Reset all filters"
-              >
-                Reset
-              </Button>
-            </HStack>
-
-            {loading ? (
-              <HStack color="text.muted" mb="4">
-                <Spinner size="sm" />
-                <Text>Loading posts...</Text>
-              </HStack>
-            ) : null}
-
-            {error ? (
-              <Text color="status.danger" mb="4">
-                {error}
-              </Text>
-            ) : null}
-
-            <Box overflowX="auto">
-              <Table.Root size="sm" minW="680px">
-                <Table.Header>
-                  <Table.Row>
-                    <Table.ColumnHeader>Post ID</Table.ColumnHeader>
-                    <Table.ColumnHeader>Platform</Table.ColumnHeader>
-                    <Table.ColumnHeader>Status</Table.ColumnHeader>
-                    <Table.ColumnHeader>Schedule</Table.ColumnHeader>
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {rows.map((row) => {
-                    const badge = statusBadge(row.status);
-
-                    return (
-                      <Table.Row key={row.id}>
-                        <Table.Cell fontFamily="mono" fontSize="xs">
-                          {row.id}
-                        </Table.Cell>
-                        <Table.Cell textTransform="capitalize">{row.platform}</Table.Cell>
-                        <Table.Cell>
-                          <Badge
-                            px="2"
-                            py="0.5"
-                            borderRadius="md"
-                            bg={badge.bg}
-                            color={badge.color}
-                            textTransform="none"
-                            fontWeight="600"
-                          >
-                            {badge.label}
-                          </Badge>
-                        </Table.Cell>
-                        <Table.Cell>{formatDateTime(row.scheduledAt)}</Table.Cell>
-                      </Table.Row>
-                    );
-                  })}
-                </Table.Body>
-              </Table.Root>
-            </Box>
-
-            {!loading && rows.length === 0 ? (
-              <Text color="text.muted" fontSize="sm" mt="3">
-                No posts match your filters.
-              </Text>
-            ) : null}
-          </Card.Body>
-        </Card.Root>
-      </Stack>
+      <div className="card">
+        {loading ? (
+          <div style={{ padding: "1.25rem" }}>
+            <div className="skeleton skeleton-row" />
+            <div className="skeleton skeleton-row" />
+            <div className="skeleton skeleton-row" />
+            <div className="skeleton skeleton-row" />
+            <div className="skeleton skeleton-row" />
+          </div>
+        ) : rows.length === 0 ? (
+          <p style={{ padding: "1.25rem", color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>No posts found.</p>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Platform</th>
+                  <th>Caption</th>
+                  <th>Status</th>
+                  <th>Schedule</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td style={{ textTransform: "capitalize" }}>{row.platform}</td>
+                    <td style={{ maxWidth: "240px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--text-muted)" }}>
+                      {row.caption || "—"}
+                    </td>
+                    <td><span className={`badge ${badgeClass(row.status)}`}>{row.status}</span></td>
+                    <td style={{ fontSize: "0.8125rem" }}>{fmtDate(row.scheduledAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </AppShell>
   );
 }

@@ -1,251 +1,185 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "@/components/navigation/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { getApiData } from "@/lib/client/api";
-import { Account, Job, JobSummary, Post } from "@/lib/client/types";
-import {
-  Badge,
-  Box,
-  Card,
-  Grid,
-  Heading,
-  HStack,
-  Spinner,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
+import type { Account, Job, JobSummary, Post } from "@/lib/client/types";
+import "@/app/components.css";
 
-function itemBadgeColor(itemStatus: string) {
-  switch (itemStatus) {
-    case "published":
-    case "done":
-      return { bg: "status.successSurface", color: "status.success" };
-    case "scheduled":
-    case "pending":
-      return { bg: "status.infoSurface", color: "status.info" };
-    case "processing":
-    case "running":
-      return { bg: "status.warningSurface", color: "status.warning" };
-    case "failed":
-      return { bg: "status.dangerSurface", color: "status.danger" };
-    default:
-      return { bg: "bg.subtle", color: "text.muted" };
-  }
+function badgeClass(status: string) {
+  const map: Record<string, string> = {
+    published: "badge-success",
+    draft: "badge-muted",
+    scheduled: "badge-info",
+    processing: "badge-warning",
+    failed: "badge-danger",
+    done: "badge-success",
+    pending: "badge-info",
+    running: "badge-warning",
+  };
+  return map[status] || "badge-muted";
 }
 
-function formatDateTime(timestamp: number | null) {
-  if (!timestamp) {
-    return "Not scheduled";
-  }
-
-  return new Date(timestamp).toLocaleString();
+function fmtDate(ts: number | null) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-export default function Home() {
+export default function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [jobSummary, setJobSummary] = useState<JobSummary | null>(null);
+  const [summary, setSummary] = useState<JobSummary | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-
-    async function loadData() {
+    async function load() {
       setLoading(true);
-      setError(null);
-
       try {
-        const [postsData, jobsData, summaryPayload, accountsData] = await Promise.all([
+        const [p, j, s, a] = await Promise.all([
           getApiData<Post[]>("/api/posts/list?limit=8"),
           getApiData<Job[]>("/api/jobs?limit=8"),
           getApiData<{ summary: JobSummary }>("/api/jobs?summary=true"),
           getApiData<Account[]>("/api/accounts"),
         ]);
-
-        if (!active) {
-          return;
-        }
-
-        setPosts(postsData);
-        setJobs(jobsData);
-        setJobSummary(summaryPayload.summary);
-        setAccounts(accountsData);
-      } catch (err) {
-        if (!active) {
-          return;
-        }
-
-        setError(err instanceof Error ? err.message : "Failed to load dashboard data");
+        if (!active) return;
+        setPosts(p);
+        setJobs(j);
+        setSummary(s.summary);
+        setAccounts(a);
+      } catch {
+        // ignore
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
-
-    void loadData();
-
-    return () => {
-      active = false;
-    };
+    load();
+    return () => { active = false; };
   }, []);
 
-  const scheduledPosts = useMemo(
-    () => posts.filter((post) => post.status === "scheduled").length,
-    [posts]
-  );
-  const publishedToday = useMemo(() => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    return posts.filter((post) => (post.publishedAt || 0) >= start).length;
+  const scheduledCount = useMemo(() => posts.filter((p) => p.status === "scheduled").length, [posts]);
+  const todayPublished = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    return posts.filter((p) => p.publishedAt && p.publishedAt >= start.getTime()).length;
   }, [posts]);
 
-  const cards = [
-    { label: "Scheduled posts", value: scheduledPosts, note: "Queued for publish" },
-    { label: "Published today", value: publishedToday, note: "Completed since midnight" },
-    { label: "Failed jobs", value: jobSummary?.failed || 0, note: "Requires attention" },
+  const stats = [
+    { label: "Scheduled posts", value: scheduledCount, note: "Queued for publish" },
+    { label: "Published today", value: todayPublished, note: "Completed since midnight" },
+    { label: "Failed jobs", value: summary?.failed || 0, note: "Requires attention" },
     { label: "Connected accounts", value: accounts.length, note: "Available destinations" },
   ];
 
   return (
     <AppShell>
-      <Stack gap="6">
-        <Box>
-          <Heading size="xl" fontFamily="heading">
-            Dashboard
-          </Heading>
-          <Text mt="1" color="text.muted">
-            Monitor queue health and scheduled content at a glance.
-          </Text>
-        </Box>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", margin: 0 }}>Dashboard</h1>
+      <p style={{ color: "var(--text-muted)", margin: "0.25rem 0 1.5rem", fontSize: "0.875rem" }}>
+        Monitor queue health and scheduled content at a glance.
+      </p>
 
-        {loading ? (
-          <HStack color="text.muted">
-            <Spinner size="sm" />
-            <Text>Loading dashboard metrics...</Text>
-          </HStack>
-        ) : null}
-
-        {error ? (
-          <Card.Root borderRadius="card" bg="bg.surface" shadow="panel">
-            <Card.Body>
-              <Text color="status.danger">{error}</Text>
-            </Card.Body>
-          </Card.Root>
-        ) : null}
-
-        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", xl: "repeat(4, 1fr)" }} gap="4">
-          {cards.map((item) => (
-            <Card.Root key={item.label} borderRadius="card" bg="bg.surface" shadow="panel">
-              <Card.Body>
-                <Text color="text.muted" fontSize="sm">
-                  {item.label}
-                </Text>
-                <Heading size="2xl" mt="2" fontFamily="heading">
-                  {item.value}
-                </Heading>
-                <Text mt="1" fontSize="sm" color="text.muted">
-                  {item.note}
-                </Text>
-              </Card.Body>
-            </Card.Root>
-          ))}
-        </Grid>
-
-        <Card.Root borderRadius="card" bg="bg.surface" shadow="panel">
-          <Card.Header>
-            <Heading size="md" fontFamily="heading">
-              Upcoming Posts
-            </Heading>
-          </Card.Header>
-          <Card.Body>
-            <Stack gap="3">
-              {posts.slice(0, 5).map((post) => (
-                <Box key={post.id} borderWidth="1px" borderColor="border.default" rounded="md" p="3">
-                  <HStack justify="space-between" align="center" gap="2">
-                    <Text fontWeight="600" fontSize="sm" textTransform="capitalize">
-                      {post.platform}
-                    </Text>
-                    <Badge
-                      px="2"
-                      py="0.5"
-                      borderRadius="md"
-                      bg={itemBadgeColor(post.status).bg}
-                      color={itemBadgeColor(post.status).color}
-                      textTransform="none"
-                      fontWeight="600"
-                    >
-                      {post.status}
-                    </Badge>
-                  </HStack>
-                  <Text color="text.muted" fontSize="sm" mt="1">
-                    {post.caption || "No caption"}
-                  </Text>
-                  <Text color="text.muted" fontSize="xs" mt="1">
-                    {formatDateTime(post.scheduledAt)}
-                  </Text>
-                </Box>
+      {loading ? (
+        <>
+          <div className="stats-grid">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="stat-card">
+                <div className="skeleton skeleton-text" />
+                <div className="skeleton skeleton-text long" style={{ height: "28px", marginTop: "8px" }} />
+                <div className="skeleton skeleton-text short" style={{ marginTop: "8px" }} />
+              </div>
+            ))}
+          </div>
+          <div className="card" style={{ marginBottom: "1rem" }}>
+            <div className="card-header"><div className="skeleton skeleton-text" style={{ width: "140px" }} /></div>
+            <div className="card-body" style={{ padding: "1.25rem" }}>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="skeleton skeleton-row" />
               ))}
-              {!loading && posts.length === 0 ? (
-                <Text color="text.muted" fontSize="sm">
-                  No posts found yet.
-                </Text>
-              ) : null}
-            </Stack>
-          </Card.Body>
-        </Card.Root>
-
-        <Card.Root borderRadius="card" bg="bg.surface" shadow="panel">
-          <Card.Header>
-            <Heading size="md" fontFamily="heading">
-              Recent Jobs
-            </Heading>
-          </Card.Header>
-          <Card.Body>
-            <Stack gap="2">
-              {jobs.slice(0, 5).map((job) => (
-                <HStack
-                  key={job.id}
-                  justify="space-between"
-                  align="center"
-                  borderWidth="1px"
-                  borderColor="border.default"
-                  rounded="md"
-                  p="2"
-                >
-                  <Text color="text.muted" fontSize="sm" fontFamily="mono">
-                    {job.id}
-                  </Text>
-                  <HStack gap="2">
-                    <Badge
-                      px="2"
-                      py="0.5"
-                      borderRadius="md"
-                      bg={itemBadgeColor(job.status).bg}
-                      color={itemBadgeColor(job.status).color}
-                      textTransform="none"
-                      fontWeight="600"
-                    >
-                      {job.status}
-                    </Badge>
-                    <Text color="text.muted" fontSize="xs">
-                      attempts {job.attempts}
-                    </Text>
-                  </HStack>
-                </HStack>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header"><div className="skeleton skeleton-text" style={{ width: "100px" }} /></div>
+            <div className="card-body" style={{ padding: "1.25rem" }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="skeleton skeleton-row" />
               ))}
-              {!loading && jobs.length === 0 ? (
-                <Text color="text.muted" fontSize="sm">
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="stats-grid">
+            {stats.map((s) => (
+              <div key={s.label} className="stat-card">
+                <div className="stat-label">{s.label}</div>
+                <div className="stat-value">{s.value}</div>
+                <div className="stat-note">{s.note}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card" style={{ marginBottom: "1rem" }}>
+            <div className="card-header">Upcoming Posts</div>
+            <div className="card-body" style={{ padding: 0 }}>
+              {posts.length === 0 ? (
+                <p style={{ padding: "1.25rem", color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
+                  No posts yet.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {posts.slice(0, 5).map((post) => (
+                    <div key={post.id} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "0.75rem 1.25rem", borderBottom: "1px solid var(--border-default)",
+                      gap: "0.75rem", flexWrap: "wrap",
+                    }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: "0.875rem", fontWeight: 600, textTransform: "capitalize" }}>
+                          {post.platform}
+                        </div>
+                        <div style={{ fontSize: "0.8125rem", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {post.caption || "No caption"}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span className={`badge ${badgeClass(post.status)}`}>{post.status}</span>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>{fmtDate(post.scheduledAt)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">Recent Jobs</div>
+            <div className="card-body" style={{ padding: 0 }}>
+              {jobs.length === 0 ? (
+                <p style={{ padding: "1.25rem", color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>
                   No job activity yet.
-                </Text>
-              ) : null}
-            </Stack>
-          </Card.Body>
-        </Card.Root>
-      </Stack>
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {jobs.slice(0, 5).map((job) => (
+                    <div key={job.id} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "0.625rem 1.25rem", borderBottom: "1px solid var(--border-default)",
+                      gap: "0.5rem", flexWrap: "wrap",
+                    }}>
+                      <span className="mono" style={{ color: "var(--text-muted)" }}>{job.id.slice(0, 8)}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <span className={`badge ${badgeClass(job.status)}`}>{job.status}</span>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>{job.attempts} attempt{job.attempts !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </AppShell>
   );
 }
