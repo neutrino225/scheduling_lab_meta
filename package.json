@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "migrate": "drizzle-kit migrate",
     "worker": "tsx --env-file=.env.local worker/index.ts",
     "worker:dev": "tsx watch --env-file=.env.local worker/index.ts"
   },

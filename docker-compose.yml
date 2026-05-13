@@ -1,6 +1,22 @@
 version: '3.9'
 
 services:
+  # Database Migration (one-shot)
+  metalab-migrate:
+    image: node:20-alpine
+    container_name: metalab-migrate
+    working_dir: /app
+    profiles:
+      - migrate
+    volumes:
+      - /data/app:/app
+      - /data/app/node_modules:/app/node_modules
+    environment:
+      NODE_ENV: production
+    command: >
+      sh -c "npm run migrate 2>/dev/null && echo 'Migrations complete' || echo 'No pending migrations'"
+    restart: no
+
   # Next.js Application (API + UI)
   metalab-app:
     image: node:20-alpine
@@ -8,9 +24,10 @@ services:
     working_dir: /app
     volumes:
       - /data/app:/app
-      - /data/app/node_modules:/app/node_modules  # Prevent volume override
+      - /data/app/node_modules:/app/node_modules
     environment:
       NODE_ENV: production
+      APP_URL: https://poster.yourdomain.com
       NEXT_PUBLIC_API_URL: https://poster.yourdomain.com
       META_GRAPH_BASE_URL: https://graph.facebook.com
       META_GRAPH_VERSION: v20.0
@@ -18,20 +35,21 @@ services:
       META_DRY_RUN: "false"
       WORKER_POLL_INTERVAL: 3000
       WORKER_MAX_CONCURRENT: 3
+      AUTH_USERNAME: ${AUTH_USERNAME}
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+      AUTH_SECRET: ${AUTH_SECRET}
       MINIO_STORAGE_MODE: minio
-      MINIO_ENDPOINT: minio.example.com
-      MINIO_PORT: 443
-      MINIO_USE_SSL: "true"
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio.example.com}
+      MINIO_PORT: ${MINIO_PORT:-443}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-true}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_REGION: us-east-1
-      MINIO_BUCKET: media
+      MINIO_REGION: ${MINIO_REGION:-us-east-1}
+      MINIO_BUCKET: ${MINIO_BUCKET:-media}
     ports:
       - "127.0.0.1:3000:3000"
     command: npm start
     restart: unless-stopped
-    depends_on:
-      - metalab-worker
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/accounts"]
       interval: 30s
@@ -48,6 +66,8 @@ services:
       - /data/app/node_modules:/app/node_modules
     environment:
       NODE_ENV: production
+      APP_URL: https://poster.yourdomain.com
+      NEXT_PUBLIC_API_URL: https://poster.yourdomain.com
       WORKER_POLL_INTERVAL: 3000
       WORKER_MAX_CONCURRENT: 3
       META_DRY_RUN: "false"
@@ -55,13 +75,13 @@ services:
       META_GRAPH_VERSION: v20.0
       META_GRAPH_TIMEOUT: 30000
       MINIO_STORAGE_MODE: minio
-      MINIO_ENDPOINT: minio.example.com
-      MINIO_PORT: 443
-      MINIO_USE_SSL: "true"
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio.example.com}
+      MINIO_PORT: ${MINIO_PORT:-443}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-true}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_REGION: us-east-1
-      MINIO_BUCKET: media
+      MINIO_REGION: ${MINIO_REGION:-us-east-1}
+      MINIO_BUCKET: ${MINIO_BUCKET:-media}
     command: npx tsx worker/index.ts
     restart: unless-stopped
     depends_on:
