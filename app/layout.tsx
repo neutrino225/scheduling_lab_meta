@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope, Space_Grotesk } from "next/font/google";
-import Script from "next/script";
+import { DM_Mono, DM_Sans, Outfit } from "next/font/google";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
-const headingFont = Space_Grotesk({
+const headingFont = Outfit({
   variable: "--font-heading",
   subsets: ["latin"],
 });
 
-const bodyFont = Manrope({
+const bodyFont = DM_Sans({
   variable: "--font-body",
   subsets: ["latin"],
 });
 
-const monoFont = IBM_Plex_Mono({
+const monoFont = DM_Mono({
   variable: "--font-mono",
   weight: ["400", "500"],
   subsets: ["latin"],
@@ -25,43 +24,21 @@ export const metadata: Metadata = {
   description: "Meta social scheduling dashboard",
 };
 
-const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
-const facebookApiVersion = process.env.NEXT_PUBLIC_FACEBOOK_API_VERSION || "v20.0";
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("metalab-theme");if(!t){t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark"}if(t==="light")document.documentElement.classList.add("light")}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-        {facebookAppId ? (
-          <>
-            <Script
-              id="facebook-jssdk"
-              src="https://connect.facebook.net/en_US/sdk.js"
-              strategy="afterInteractive"
-            />
-            <Script id="facebook-init" strategy="afterInteractive">
-              {`
-                window.fbAsyncInit = function() {
-                  FB.init({
-                    appId: '${facebookAppId}',
-                    cookie: true,
-                    xfbml: true,
-                    version: '${facebookApiVersion}'
-                  });
-
-                  FB.AppEvents.logPageView();
-                };
-              `}
-            </Script>
-          </>
-        ) : null}
         <Providers>{children}</Providers>
       </body>
     </html>
