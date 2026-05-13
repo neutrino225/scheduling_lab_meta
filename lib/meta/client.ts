@@ -282,3 +282,47 @@ export async function publishInstagramContainer(
     config
   );
 }
+
+/**
+ * Fetch profile picture for a Facebook Page or Instagram User
+ */
+export async function getProfilePicture(
+  id: string,
+  accessToken: string,
+  platform: "facebook" | "instagram",
+  config?: MetaClientConfig
+): Promise<string | null> {
+  const cfg = config || getMetaClientConfig();
+  
+  // In dry-run mode, return a consistent placeholder
+  if (cfg.dryRun) {
+    return `https://ui-avatars.com/api/?name=${id}&background=random&size=256`;
+  }
+
+  try {
+    const endpoint = platform === "facebook" 
+      ? `${id}/picture` 
+      : id;
+    
+    const params: Record<string, unknown> = platform === "facebook"
+      ? { redirect: 0, type: "large" }
+      : { fields: "profile_picture_url" };
+
+    const response = await makeGraphRequest<any>(
+      endpoint,
+      accessToken,
+      "GET",
+      params,
+      cfg
+    );
+
+    if (platform === "facebook") {
+      return response.data?.url || null;
+    } else {
+      return response.profile_picture_url || null;
+    }
+  } catch (error) {
+    console.error(`Error fetching profile picture for ${id}:`, error);
+    return null;
+  }
+}

@@ -16,6 +16,7 @@ export interface Account {
   igUserId: string | null;
   accessToken: string | null;
   tokenExpiresAt: number | null;
+  profilePictureUrl?: string;
 }
 
 export interface Post {
