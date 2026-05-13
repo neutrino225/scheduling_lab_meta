@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-14T00:00:00.000Z",
+  "title": "Design System: Meta Lab",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Canvas Void", "canonical": "#070709", "tonalRamp": ["#070709", "#080a0e", "#0a0c12", "#0b0e16", "#0d101b", "#0f121f", "#111424", "#131729"] },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#0f1013", "tonalRamp": ["#0f1013", "#111216", "#13151a", "#16181e", "#191b22", "#1c1e26", "#1f222b", "#23262f"] },
+      "subtle": { "role": "neutral", "displayName": "Subtle Surface", "canonical": "#17191f", "tonalRamp": ["#17191f", "#191c23", "#1c1f28", "#1f222d", "#222632", "#262a37", "#2a2e3c", "#2e3242"] },
+      "muted-bg": { "role": "neutral", "displayName": "Muted Background", "canonical": "#12141a", "tonalRamp": ["#12141a", "#14161d", "#161921", "#191c25", "#1c1f29", "#1f222e", "#222633", "#262a38"] },
+      "text-primary": { "role": "neutral", "displayName": "Text Primary", "canonical": "#f4f5f7", "tonalRamp": ["#f4f5f7", "#edeef2", "#e6e8ed", "#dfe1e8", "#d8dbe3", "#d1d4de", "#caced9", "#c3c7d4"] },
+      "text-muted": { "role": "neutral", "displayName": "Text Muted", "canonical": "#a5aab5", "tonalRamp": ["#a5aab5", "#9da2ae", "#959aa7", "#8d92a0", "#858b99", "#7d8392", "#757b8b", "#6d7384"] },
+      "accent-primary": { "role": "primary", "displayName": "Accent Silver", "canonical": "#d9dee8", "tonalRamp": ["#d9dee8", "#cdd3e0", "#c1c8d8", "#b5bdd0", "#a9b2c8", "#9da7c0", "#919cb8", "#8591b0"] },
+      "status-success": { "role": "tertiary", "displayName": "Status Green", "canonical": "#188a5b", "tonalRamp": ["#188a5b", "#157a50", "#126b46", "#0f5c3c", "#0c4d32", "#0a3e28", "#072f1e", "#052014"] },
+      "status-warning": { "role": "tertiary", "displayName": "Status Amber", "canonical": "#c8841f", "tonalRamp": ["#c8841f", "#b3761b", "#9e6818", "#895a14", "#744c11", "#5f3e0e", "#4a300b", "#352208"] },
+      "status-danger": { "role": "tertiary", "displayName": "Status Red", "canonical": "#c9483a", "tonalRamp": ["#c9483a", "#b54033", "#a1392d", "#8d3227", "#792b21", "#65241b", "#511d15", "#3d160f"] },
+      "status-info": { "role": "tertiary", "displayName": "Status Blue", "canonical": "#2f7dbf", "tonalRamp": ["#2f7dbf", "#2a70aa", "#256396", "#205781", "#1b4a6d", "#163d58", "#113044", "#0c2330"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Dashboard metric values, page titles." },
+      "headline": { "displayName": "Headline", "purpose": "Card headers, section titles." },
+      "title": { "displayName": "Title", "purpose": "Sub-headers, navigation heading." },
+      "body": { "displayName": "Body", "purpose": "Post captions, form labels, table cells. Max 75ch." },
+      "label": { "displayName": "Label", "purpose": "Button text, filter labels, field labels." },
+      "mono": { "displayName": "Mono", "purpose": "IDs, tokens, timestamps, technical data." }
+    },
+    "shadows": [
+      { "name": "panel", "value": "0 16px 42px rgba(0, 0, 0, 0.36)", "purpose": "Cards, dropdowns, elevated containers." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." }
+    ],
+    "breakpoints": [
+      { "name": "base", "value": "0em" },
+      { "name": "sm", "value": "30em" },
+      { "name": "md", "value": "48em" },
+      { "name": "lg", "value": "62em" },
+      { "name": "xl", "value": "80em" },
+      { "name": "2xl", "value": "96em" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary call-to-action. Used for Create Post, Login, and other main actions.",
+      "html": "<button class=\"ds-btn-primary\">Create Post</button>",
+      "css": ".ds-btn-primary { background: #d9dee8; color: #0e1117; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; padding: 8px 24px; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35); transition: filter 0.2s; } .ds-btn-primary:hover { filter: brightness(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid #d9dee8; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.62; cursor: not-allowed; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action. Used for Logout, Cancel, and alternatives.",
+      "html": "<button class=\"ds-btn-outline\">Logout</button>",
+      "css": ".ds-btn-outline { background: #12141a; color: #f4f5f7; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; padding: 8px 24px; border: 1px solid #272a32; border-radius: 10px; cursor: pointer; transition: background 0.2s, border-color 0.2s; } .ds-btn-outline:hover { background: #17191f; border-color: #d9dee8; } .ds-btn-outline:focus-visible { outline: 2px solid #d9dee8; outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Status indicator for posts and jobs. Color pair signals state instantly.",
+      "html": "<span class=\"ds-badge ds-badge-success\">Published</span> <span class=\"ds-badge ds-badge-pending\">Scheduled</span> <span class=\"ds-badge ds-badge-danger\">Failed</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 600; line-height: 1.4; } .ds-badge-success { background: rgba(24, 138, 91, 0.16); color: #188a5b; } .ds-badge-pending { background: rgba(47, 125, 191, 0.16); color: #2f7dbf; } .ds-badge-danger { background: rgba(201, 72, 58, 0.16); color: #c9483a; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "sidebar-nav",
+      "description": "App navigation sidebar with active state highlight.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\">Dashboard</a><a class=\"ds-nav-item\" href=\"#\">Posts</a><a class=\"ds-nav-item\" href=\"#\">Jobs</a><a class=\"ds-nav-item\" href=\"#\">Accounts</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 8px; padding: 16px; } .ds-nav-item { display: block; padding: 6px 12px; border-radius: 6px; font-family: Manrope, sans-serif; font-size: 0.875rem; font-weight: 500; color: #f4f5f7; text-decoration: none; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; } .ds-nav-item:hover { background: #17191f; border-color: #272a32; } .ds-nav-active { background: #1d212a; color: #f4f5f7; border-color: #d9dee8; font-weight: 600; }"
+    },
+    {
+      "name": "Card Container",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Content card. Used for grouping related data on dashboard and list pages.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><h3 class=\"ds-card-title\">Upcoming Posts</h3></div><div class=\"ds-card-body\"><p class=\"ds-card-text\">Content inside the card body.</p></div></div>",
+      "css": ".ds-card { background: #0f1013; border: 1px solid #272a32; border-radius: 14px; box-shadow: 0 16px 42px rgba(0, 0, 0, 0.36); } .ds-card-header { padding: 16px 24px; border-bottom: 1px solid #272a32; } .ds-card-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 600; color: #f4f5f7; margin: 0; } .ds-card-body { padding: 24px; } .ds-card-text { font-family: Manrope, sans-serif; font-size: 1rem; color: #a5aab5; margin: 0; line-height: 1.45; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text input for forms and filters.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Enter value\" />",
+      "css": ".ds-input { background: #17191f; color: #f4f5f7; font-family: Manrope, sans-serif; font-size: 1rem; padding: 8px 12px; border: 1px solid #272a32; border-radius: 8px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; box-sizing: border-box; } .ds-input:hover { border-color: #d9dee8; } .ds-input:focus { border-color: #d9dee8; box-shadow: 0 0 0 1px #d9dee8; } .ds-input::placeholder { color: #a5aab5; }"
+    },
+    {
+      "name": "Table",
+      "kind": "custom",
+      "refersTo": "data-table",
+      "description": "Data table for lists of posts, jobs, and accounts.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Post ID</th><th>Status</th><th>Schedule</th></tr></thead><tbody><tr><td class=\"ds-mono\">abc-123</td><td><span class=\"ds-badge ds-badge-success\">Published</span></td><td>May 14, 2026</td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; font-family: Manrope, sans-serif; font-size: 1rem; color: #f4f5f7; } .ds-table thead { background: #12141a; } .ds-table th { padding: 8px 12px; font-size: 0.75rem; font-weight: 600; color: #a5aab5; text-transform: uppercase; letter-spacing: 0.08em; text-align: left; border-bottom: 1px solid #272a32; } .ds-table td { padding: 8px 12px; border-bottom: 1px solid #272a32; } .ds-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); } .ds-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Publishing Desk",
+    "overview": "Meta Lab is a publishing desk for a single operator: a clean, dark surface where content arrives, gets scheduled, and departs. Every element that doesn't carry post metadata is excess. The interface is a terminal-quality GUI \u2014 high information density, no decorative flourishes, every pixel earning its place. This system explicitly rejects Generic SaaS Cream: no pastel gradients, round illustration masks, hero-metric templates, or 'modern' dataviz ornament. The aesthetic is editorial and sparse. Think a darkroom crossed with a flight deck: precise controls, meaningful status lights, and nothing else.",
+    "keyCharacteristics": [
+      "Content-forward: posts, status, and schedules own the interface",
+      "Status at a glance: color + shape signals before text",
+      "Tonal surfaces layered by lightness (canvas \u2192 surface \u2192 subtle)",
+      "Panel shadow (0 16px 42px) for containers that need to float",
+      "Tight typography stack with clear hierarchy"
+    ],
+    "rules": [
+      { "name": "The Rarity Rule", "body": "The accent primary (brand.300) appears on \u22645% of any surface. Its application is limited to active navigation, focus rings, and border hover states. Never decorative, never repeated.", "section": "colors" },
+      { "name": "The Status Light Rule", "body": "Status colors always appear in pairs: a solid text/icon color and a matching background at 16% opacity. The background gives the color presence at small sizes; the pair ensures badges and labels are legible without white text on saturated color.", "section": "colors" },
+      { "name": "The Table Header Rule", "body": "All table column headers are uppercase, 0.75rem, letter-spacing 0.08em, in text-muted color. This creates a consistent, scannable data grid rhythm across every page.", "section": "typography" },
+      { "name": "The No-Border-Stack Rule", "body": "Never stack a shadowed card on top of another shadowed card. Containment within a shadowed card is expressed via tonal surface change (subtle/muted-bg), not by adding a second shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use tonal surface steps (canvas \u2192 surface \u2192 subtle \u2192 muted-bg) for containment.",
+      "Do apply status colors only as paired text + 16% opacity background \u2014 never solid backgrounds on badges.",
+      "Do keep status badges compact (6px radius, 0.875rem, font-weight 600).",
+      "Do use mono font for IDs, tokens, timestamps, and any machine-readable data.",
+      "Do reserve accent primary for active states, focus rings, and hover borders only.",
+      "Do use the panel shadow (0 16px 42px) for cards and elevated containers.",
+      "Do keep the sidebar at 260px and use vertical navigation on desktop.",
+      "Do use Space Grotesk for all headings and Manrope for body.",
+      "Do uppercase table column headers with wide letter-spacing."
+    ],
+    "donts": [
+      "Don't use pastel gradients, glassmorphism, gradient text, or side-stripe borders.",
+      "Don't nest cards inside cards. Use tonal surface change instead.",
+      "Don't apply the accent primary decoratively. Its rarity is the point.",
+      "Don't use cards when a flat table row or list item suffices.",
+      "Don't stack shadowed containers. One shadow per depth layer.",
+      "Don't wrap everything in a container. Most things don't need one.",
+      "Don't add em dashes. Use commas, colons, or periods.",
+      "Don't use modals as a first solution. Exhaust inline alternatives first.",
+      "Don't animate CSS layout properties. Use ease-out-quart/expo curves. No bounce."
+    ]
+  }
+}

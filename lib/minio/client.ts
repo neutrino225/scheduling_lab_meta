@@ -128,7 +128,8 @@ async function uploadToLocal(
 }
 
 function getLocalUrl(storageKey: string): string {
-  return `/api/media/serve/${storageKey}`;
+  const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_API_URL || "";
+  return `${baseUrl}/api/media/serve/${storageKey}`;
 }
 
 function deleteFromLocal(storageKey: string): void {

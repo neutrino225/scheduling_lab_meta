@@ -7,12 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "worker": "tsx worker/index.ts",
-    "worker:dev": "tsx watch worker/index.ts"
+    "worker": "tsx --env-file=.env.local worker/index.ts",
+    "worker:dev": "tsx watch --env-file=.env.local worker/index.ts"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.34.0",
-    "@emotion/react": "^11.14.0",
     "better-sqlite3": "^12.9.0",
     "drizzle-orm": "^0.45.2",
     "minio": "^8.0.0",

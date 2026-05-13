@@ -11,7 +11,7 @@ import { processDueJobs } from "./processor";
 // Configuration
 const POLL_INTERVAL_MS = process.env.WORKER_POLL_INTERVAL
   ? parseInt(process.env.WORKER_POLL_INTERVAL, 10)
-  : 3000; // 3 seconds default
+  : 60000; // 1 minute default
 
 const MAX_CONCURRENT_JOBS = process.env.WORKER_MAX_CONCURRENT
   ? parseInt(process.env.WORKER_MAX_CONCURRENT, 10)
@@ -34,6 +34,10 @@ async function workerLoop() {
           if (processed > 0) {
             console.log(
               `[${new Date().toISOString()}] Processed ${processed} jobs`
+            );
+          } else {
+            console.log(
+              `[${new Date().toISOString()}] Nothing to post...`
             );
           }
         } finally {

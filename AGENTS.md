@@ -24,6 +24,8 @@ This is NOT a SaaS system. It is a single-tenant internal tool.
 ### Frontend / Backend
 - Next.js 16.2.3 (App Router)
 - TypeScript
+- **Design Tokens:** Space Grotesk (Headings), Manrope (Body)
+- **Aesthetic:** "The Publishing Desk" (high-density, split-pane layout)
 
 ### Database
 - SQLite (primary)
@@ -255,6 +257,7 @@ The system supports two storage modes via `MINIO_STORAGE_MODE` environment varia
 - No external service required
 - Perfect for local development and testing
 - Files served via `GET /api/media/serve/{storageKey}`
+- **Note:** In local mode, `publicUrl` is prefixed with the app's base URL (e.g., `http://localhost:3000`) to provide absolute paths for the Meta Graph API.
 
 #### MinIO Mode (Production)
 - `MINIO_STORAGE_MODE=minio`

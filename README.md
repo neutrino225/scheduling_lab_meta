@@ -101,7 +101,10 @@ meta-lab/
 - ✅ Media storage (local or S3-compatible)
 - ✅ Complete REST API
 - ✅ Session-based authentication (login + route protection)
-- ✅ Chakra UI operator dashboard (dashboard, posts, jobs, accounts, media)
+- ✅ "The Publishing Desk" aesthetic (Space Grotesk, Manrope)
+- ✅ High-density desktop-first operator dashboard
+- ✅ Split-pane atmospheric login experience
+- ✅ Atomic background job queue with automatic retry
 
 ### Infrastructure
 - ✅ Docker Compose containerization
