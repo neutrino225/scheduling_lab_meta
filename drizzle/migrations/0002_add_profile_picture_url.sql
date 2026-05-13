@@ -1,0 +1,1 @@
+ALTER TABLE accounts ADD COLUMN profile_picture_url text;
