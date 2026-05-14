@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { getApiData } from "@/lib/client/api";
 import { PostCard } from "@/components/post-card";
+import { Chip, chipVariant } from "@/components/primitives/chip";
 import type { PostWithDetails, Account } from "@/lib/client/types";
 import "@/app/components.css";
 
@@ -256,9 +257,9 @@ export default function Dashboard() {
                                 {post.status === "published" ? `Published ${fmtDate(post.publishedAt)}` : fmtDate(post.createdAt)}
                               </div>
                             </div>
-                            <span className={`badge ${post.status === "published" ? "badge-success" : "badge-danger"}`} style={{ fontSize: "0.6rem" }}>
+                            <Chip variant={post.status === "published" ? "success" : "danger"} style={{ fontSize: "0.65rem" }}>
                               {post.status === "published" ? "Live" : "Failed"}
-                            </span>
+                            </Chip>
                           </div>
                         );
                       })}

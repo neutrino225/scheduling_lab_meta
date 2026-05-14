@@ -6,14 +6,7 @@ import { getApiData } from "@/lib/client/api";
 import type { Job, JobSummary } from "@/lib/client/types";
 import { Select } from "@/components/primitives";
 import "@/app/components.css";
-
-function badgeClass(s: string) {
-  const m: Record<string, string> = {
-    done: "badge-success", pending: "badge-info",
-    running: "badge-warning", failed: "badge-danger",
-  };
-  return m[s] || "badge-muted";
-}
+import { Chip, chipVariant } from "@/components/primitives/chip";
 
 function fmtDate(ts: number | null) {
   if (!ts) return "—";
@@ -126,7 +119,7 @@ export default function JobsPage() {
                   <tr key={job.id}>
                     <td className="mono">{job.id.slice(0, 8)}</td>
                     <td className="mono">{job.postId.slice(0, 8)}</td>
-                    <td><span className={`badge ${badgeClass(job.status)}`}>{job.status}</span></td>
+                    <td><Chip variant={chipVariant(job.status)}>{job.status}</Chip></td>
                     <td>{job.attempts}</td>
                     <td style={{ fontSize: "0.8125rem" }}>{fmtDate(job.runAt)}</td>
                     <td style={{ maxWidth: "200px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--text-muted)", fontSize: "0.8125rem" }}>

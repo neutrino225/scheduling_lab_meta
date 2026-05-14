@@ -354,3 +354,45 @@ export async function getPostAccount(postId: string) {
 
   return accountResult[0] || null;
 }
+
+/**
+ * Reschedule a post: update scheduled time, reset job for retry
+ */
+export async function reschedulePost(
+  postId: string,
+  scheduledAt: number
+) {
+  await db
+    .update(posts)
+    .set({ scheduledAt, status: "scheduled", error: null })
+    .where(eq(posts.id, postId));
+
+  const existingJob = await db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.postId, postId));
+
+  if (existingJob.length > 0) {
+    await db
+      .update(jobs)
+      .set({
+        runAt: scheduledAt,
+        status: "pending",
+        attempts: 0,
+        lockedAt: null,
+        lastError: null,
+      })
+      .where(eq(jobs.postId, postId));
+  } else {
+    const jobId = uuid();
+    await db.insert(jobs).values({
+      id: jobId,
+      postId,
+      runAt: scheduledAt,
+      status: "pending",
+      attempts: 0,
+    });
+  }
+
+  return getPost(postId);
+}

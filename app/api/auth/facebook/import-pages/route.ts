@@ -54,28 +54,36 @@ export async function POST() {
       .filter(Boolean);
 
     const inserted: { id: string; name: string; pageId: string }[] = [];
+    const updated: { pageId: string; name: string }[] = [];
 
     for (const page of pages) {
-      if (allAccountIds.includes(page.id)) continue;
-
-      const id = uuid();
-      await db.insert(accounts).values({
-        id,
-        platform: "facebook",
-        name: page.name,
-        pageId: page.id,
-        accessToken: page.access_token!,
-        tokenExpiresAt: null,
-      });
-
-      inserted.push({ id, name: page.name, pageId: page.id });
+      if (allAccountIds.includes(page.id)) {
+        await db
+          .update(accounts)
+          .set({ accessToken: page.access_token!, name: page.name })
+          .where(eq(accounts.pageId, page.id));
+        updated.push({ pageId: page.id, name: page.name });
+      } else {
+        const id = uuid();
+        await db.insert(accounts).values({
+          id,
+          platform: "facebook",
+          name: page.name,
+          pageId: page.id,
+          accessToken: page.access_token!,
+          tokenExpiresAt: null,
+        });
+        inserted.push({ id, name: page.name, pageId: page.id });
+      }
     }
 
     return NextResponse.json({
       success: true,
       imported: inserted.length,
+      updated: updated.length,
       total: pages.length,
       accounts: inserted,
+      refreshed: updated,
     });
   } catch (err) {
     return NextResponse.json(

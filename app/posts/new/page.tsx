@@ -143,7 +143,7 @@ export default function NewPostPage() {
           <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
             {/* ── Platform Tabs + Account ── */}
-            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)" }}>
               <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border-default)" }}>
                 <SegmentedControl
                   options={[{ label: "Facebook", value: "facebook" }, { label: "Instagram", value: "instagram" }]}
@@ -168,7 +168,7 @@ export default function NewPostPage() {
             </div>
 
             {/* ── Content Card ── */}
-            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)" }}>
               <div style={{ padding: "1rem var(--card-padding)", borderBottom: "1px solid var(--border-default)" }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-caption)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
                   Content
@@ -189,7 +189,7 @@ export default function NewPostPage() {
             </div>
 
             {/* ── Media Card ── */}
-            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)" }}>
               <div style={{ padding: "1rem var(--card-padding)", borderBottom: "1px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-caption)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
                   Media
@@ -289,7 +289,7 @@ export default function NewPostPage() {
             </div>
 
             {/* ── Scheduling Card ── */}
-            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)" }}>
               <div style={{ padding: "1rem var(--card-padding)", borderBottom: "1px solid var(--border-default)" }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-caption)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
                   Scheduling

@@ -79,7 +79,7 @@
   border: 1px solid var(--color-canvas-pale);
 }
 
-.badge-success { color: var(--text-muted); }
+.badge-success { color: var(--status-success); }
 .badge-warning { color: var(--text-muted); }
 .badge-danger { color: var(--accent-primary); }
 .badge-info { color: var(--text-muted); }
