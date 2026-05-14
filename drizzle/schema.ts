@@ -23,6 +23,10 @@ export const accounts = sqliteTable(
     accessToken: text("access_token").notNull(),
     tokenExpiresAt: integer("token_expires_at"),
     profilePictureUrl: text("profile_picture_url"),
+    category: text("category"),
+    followersCount: integer("followers_count"),
+    igUsername: text("ig_username"),
+    igProfilePictureUrl: text("ig_profile_picture_url"),
   },
   (t) => [
     check("platform_check", sql`${t.platform} IN ('facebook', 'instagram')`),

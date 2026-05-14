@@ -9,7 +9,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div>
         {label && (
-          <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, marginBottom: "0.25rem", color: "var(--text-primary)" }}>
+          <label style={{ display: "block", fontSize: "var(--text-body-sm)", fontWeight: 500, marginBottom: "0.25rem", color: "var(--text-primary)", letterSpacing: "var(--tracking-body-sm)" }}>
             {label}
           </label>
         )}
@@ -18,10 +18,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             className={className}
             style={{
-              width: "100%", padding: "8px 36px 8px 12px",
-              borderRadius: "7px", border: "1px solid var(--border-default)",
+              width: "100%", padding: "10px 36px 10px 12px",
+              borderRadius: "var(--radius-buttons)", border: "1px solid var(--border-default)",
               background: "var(--bg-subtle)", color: "var(--text-primary)",
-              fontSize: "0.9375rem", fontFamily: "inherit",
+              fontSize: "var(--text-body-sm)", fontFamily: "inherit",
               cursor: "pointer", appearance: "none",
               WebkitAppearance: "none", MozAppearance: "none",
               outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",

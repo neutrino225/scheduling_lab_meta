@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, inArray, desc, asc, like } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { posts, media, jobs, accounts } from "@/drizzle/schema";
 import { v4 as uuid } from "uuid";
@@ -117,18 +117,77 @@ export async function getPost(postId: string): Promise<PostWithMediaAndJob | nul
 /**
  * List posts with optional filtering
  */
-export async function listPosts(filters?: {
+export type PostFilter = {
   accountId?: string;
   platform?: string;
   status?: string[];
+  search?: string;
+  sort?: string;
   scheduledBefore?: number;
   scheduledAfter?: number;
+  createdBefore?: number;
+  createdAfter?: number;
   limit?: number;
   offset?: number;
-}) {
+};
+
+function buildPostConditions(filters?: PostFilter) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const whereConditions: any[] = [];
 
+  if (filters?.accountId) {
+    whereConditions.push(eq(posts.accountId, filters.accountId));
+  }
+
+  if (filters?.platform) {
+    whereConditions.push(eq(posts.platform, filters.platform));
+  }
+
+  if (filters?.status && filters.status.length > 0) {
+    whereConditions.push(inArray(posts.status, filters.status));
+  }
+
+  if (filters?.search) {
+    whereConditions.push(like(posts.caption, `%${filters.search}%`));
+  }
+
+  if (filters?.scheduledBefore) {
+    whereConditions.push(lte(posts.scheduledAt, filters.scheduledBefore));
+  }
+
+  if (filters?.scheduledAfter) {
+    whereConditions.push(gte(posts.scheduledAt, filters.scheduledAfter));
+  }
+
+  if (filters?.createdBefore) {
+    whereConditions.push(lte(posts.createdAt, filters.createdBefore));
+  }
+
+  if (filters?.createdAfter) {
+    whereConditions.push(gte(posts.createdAt, filters.createdAfter));
+  }
+
+  return whereConditions;
+}
+
+const sortMap: Record<string, unknown> = {
+  createdAt_desc: desc(posts.createdAt),
+  createdAt_asc: asc(posts.createdAt),
+  scheduledAt_desc: desc(posts.scheduledAt),
+  scheduledAt_asc: asc(posts.scheduledAt),
+  publishedAt_desc: desc(posts.publishedAt),
+  publishedAt_asc: asc(posts.publishedAt),
+  status_asc: asc(posts.status),
+  status_desc: desc(posts.status),
+};
+
+function resolveOrderBy(sort?: string) {
+  return (sort && sortMap[sort]) || desc(posts.createdAt);
+}
+
+export async function listPosts(filters?: PostFilter) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const whereConditions = buildPostConditions(filters);
   if (filters?.accountId) {
     whereConditions.push(eq(posts.accountId, filters.accountId));
   }
@@ -149,29 +208,12 @@ export async function listPosts(filters?: {
     whereConditions.push(gte(posts.scheduledAt, filters.scheduledAfter));
   }
 
-  // Build the full query with all filters
-  if (whereConditions.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = db
-      .select()
-      .from(posts)
-      .where(and(...whereConditions))
-      .orderBy(posts.createdAt);
-
-    if (filters?.limit) {
-      query = query.limit(filters.limit);
-    }
-
-    if (filters?.offset) {
-      query = query.offset(filters.offset);
-    }
-
-    return query;
-  }
-
-  // No filters - just return ordered results
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = db.select().from(posts).orderBy(posts.createdAt);
+  let query: any = db.select().from(posts).orderBy(resolveOrderBy(filters?.sort) as any);
+
+  if (whereConditions.length > 0) {
+    query = query.where(and(...whereConditions));
+  }
 
   if (filters?.limit) {
     query = query.limit(filters.limit);
@@ -182,6 +224,66 @@ export async function listPosts(filters?: {
   }
 
   return query;
+}
+
+/**
+ * List posts with joined media and account data
+ */
+export async function listPostsWithDetails(filters?: PostFilter) {
+  const whereConditions = buildPostConditions(filters);
+  const conditions = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query: any = db.select().from(posts).orderBy(resolveOrderBy(filters?.sort) as any);
+
+  if (conditions) query = query.where(conditions);
+  if (filters?.limit) query = query.limit(filters.limit);
+  if (filters?.offset) query = query.offset(filters.offset);
+
+  const postRows = (await query) as Array<{ id: string; accountId: string }>;
+
+  if (postRows.length === 0) return [];
+
+  const postIds = postRows.map((p) => p.id);
+  const accountIds = [...new Set(postRows.map((p) => p.accountId))];
+
+  const mediaRows = await db
+    .select()
+    .from(media)
+    .where(inArray(media.postId, postIds))
+    .orderBy(media.orderIndex);
+
+  const mediaByPostId: Record<string, (typeof mediaRows[0])[]> = {};
+  for (const m of mediaRows) {
+    if (!mediaByPostId[m.postId]) mediaByPostId[m.postId] = [];
+    mediaByPostId[m.postId].push(m);
+  }
+
+  const accountRows = await db
+    .select({
+      id: accounts.id,
+      name: accounts.name,
+      platform: accounts.platform,
+      pageId: accounts.pageId,
+      igUserId: accounts.igUserId,
+      profilePictureUrl: accounts.profilePictureUrl,
+      category: accounts.category,
+      followersCount: accounts.followersCount,
+      igUsername: accounts.igUsername,
+    })
+    .from(accounts)
+    .where(inArray(accounts.id, accountIds));
+
+  const accountById: Record<string, (typeof accountRows[0])> = {};
+  for (const a of accountRows) {
+    accountById[a.id] = a;
+  }
+
+  return postRows.map((p: { id: string; accountId: string }) => ({
+    ...p,
+    media: mediaByPostId[p.id] || [],
+    account: accountById[p.accountId] || null,
+  }));
 }
 
 /**

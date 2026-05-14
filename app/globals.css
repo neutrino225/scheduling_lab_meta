@@ -2,47 +2,146 @@
 
 @theme inline {
   --font-sans: var(--font-body);
-  --font-mono: var(--font-mono, "DM Mono", monospace);
+  --font-mono: var(--font-mono, var(--font-mdio), "DM Mono", monospace);
 }
 
+/* ── Theme-independent tokens ── */
 :root {
-  --bg-canvas: #0a0a0a;
-  --bg-surface: #141414;
-  --bg-subtle: #1e1e1e;
-  --bg-muted: #181818;
-  --text-primary: #e8e8e8;
-  --text-muted: #8a8a8a;
-  --text-subtle: #666666;
-  --border-default: #2a2a2a;
-  --accent-primary: #d47a7a;
-  --accent-surface: #2a1c1c;
-  --accent-text: #e8e8e8;
-  --status-success: #22a06b;
-  --status-warning: #d4932b;
-  --status-danger: #d4564a;
-  --status-info: #3b8fcb;
-  --status-success-surface: rgba(34, 160, 107, 0.15);
-  --status-warning-surface: rgba(212, 147, 43, 0.15);
-  --status-danger-surface: rgba(212, 86, 74, 0.15);
-  --status-info-surface: rgba(59, 143, 203, 0.15);
+  --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mdio: "MDIO", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --text-caption: 12px;
+  --leading-caption: 1.5;
+  --tracking-caption: -0.36px;
+  --text-body-sm: 14px;
+  --leading-body-sm: 1.5;
+  --tracking-body-sm: -0.42px;
+  --text-body: 16px;
+  --leading-body: 1.5;
+  --tracking-body: -0.48px;
+  --text-subheading: 20px;
+  --leading-subheading: 1.5;
+  --tracking-subheading: -0.6px;
+  --text-heading: 32px;
+  --leading-heading: 1.2;
+  --tracking-heading: -0.96px;
+  --text-heading-lg: 48px;
+  --leading-heading-lg: 1.2;
+  --tracking-heading-lg: -1.44px;
+  --text-display: 64px;
+  --leading-display: 1.2;
+  --tracking-display: -1.92px;
+
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --spacing-unit: 4px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-84: 84px;
+  --spacing-168: 168px;
+
+  --card-padding: 24px;
+  --element-gap: 12px;
+
+  --radius-lg: 8px;
+  --radius-2xl: 16px;
+  --radius-3xl: 32px;
+  --radius-full: 9999px;
+  --radius-tags: 9999px;
+  --radius-cards: 16px;
+  --radius-buttons: 8px;
+  --radius-largeelements: 32px;
+
+  --shadow-sm: rgba(0, 0, 0, 0.12) 0px 4px 8px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.24) 0px 4px 16px 0px;
 }
 
+/* ── Dark theme (default) ── */
+:root {
+  --color-action-red: #d04841;
+  --color-action-blue-gradient: #5a82de;
+
+  --bg-canvas: #121212;
+  --bg-surface: #1e1e1e;
+  --bg-subtle: #282828;
+  --bg-muted: #222222;
+  --text-primary: #e8e8e8;
+  --text-muted: #9e9e9e;
+  --text-subtle: #7a7a7a;
+  --border-default: #333333;
+  --accent-primary: #d04841;
+  --accent-surface: #2a2020;
+  --accent-text: #ffffff;
+  --status-success: #9e9e9e;
+  --status-warning: #9e9e9e;
+  --status-danger: #d04841;
+  --status-info: #9e9e9e;
+  --status-success-surface: #1e1e1e;
+  --status-warning-surface: #1e1e1e;
+  --status-danger-surface: #1e1e1e;
+  --status-info-surface: #1e1e1e;
+  --hover-bg: var(--accent-surface);
+  --hover-text: var(--accent-primary);
+  --control-height: 34px;
+  --radius-sm: 6px;
+  --radius-md: var(--radius-buttons);
+  --radius-lg: var(--radius-cards);
+}
+
+/* ── Light theme ── */
 .light {
-  --bg-canvas: #f4f5f0;
+  --color-action-red: #d04841;
+  --color-action-blue-gradient: #5a82de;
+
+  --bg-canvas: #eeebea;
   --bg-surface: #ffffff;
-  --bg-subtle: #eef0f4;
-  --bg-muted: #f0f1f4;
-  --text-primary: #1a1b1e;
-  --text-muted: #6b7280;
-  --text-subtle: #9ca3af;
-  --border-default: #d1d5db;
-  --accent-primary: #c06666;
-  --accent-surface: #f5ecec;
-  --accent-text: #1a1b1e;
-  --status-success-surface: rgba(24, 138, 91, 0.10);
-  --status-warning-surface: rgba(200, 132, 31, 0.10);
-  --status-danger-surface: rgba(201, 72, 58, 0.10);
-  --status-info-surface: rgba(47, 125, 191, 0.10);
+  --bg-subtle: #f7f5f4;
+  --bg-muted: #eeebea;
+  --text-primary: #181717;
+  --text-muted: #2e2d2d;
+  --text-subtle: #575555;
+  --border-default: #d5d3d2;
+  --accent-primary: #d04841;
+  --accent-surface: #f7f5f4;
+  --accent-text: #ffffff;
+  --status-success: #2e2d2d;
+  --status-warning: #2e2d2d;
+  --status-danger: #d04841;
+  --status-info: #2e2d2d;
+  --status-success-surface: #ffffff;
+  --status-warning-surface: #ffffff;
+  --status-danger-surface: #ffffff;
+  --status-info-surface: #ffffff;
+  --hover-bg: var(--accent-surface);
+  --hover-text: var(--accent-primary);
+  --control-height: 34px;
+  --radius-sm: 6px;
+  --radius-md: var(--radius-buttons);
+  --radius-lg: var(--radius-cards);
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
 }
 
 body {
@@ -50,10 +149,218 @@ body {
   background: var(--bg-canvas);
   color: var(--text-primary);
   font-family: var(--font-body);
-  letter-spacing: 0.01em;
-  line-height: 1.45;
+  letter-spacing: var(--tracking-body);
+  line-height: var(--leading-body);
 }
 
-.light body {
-  background-image: none;
+/* ── Shared Input Styling ── */
+
+.dp-wrapper,
+.tp-popper {
+  width: 100% !important;
+}
+
+.dp-wrapper input,
+.tp-popper input {
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border-radius: var(--radius-buttons) !important;
+  border: 1px solid var(--border-default) !important;
+  background: var(--bg-subtle) !important;
+  color: var(--text-primary) !important;
+  font-size: var(--text-body-sm) !important;
+  font-family: var(--font-body) !important;
+  outline: none !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+.dp-wrapper input:focus,
+.tp-popper input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 1px var(--accent-primary) !important;
+}
+
+/* ── Calendar / Popper Theme ── */
+
+.react-datepicker-popper {
+  z-index: 50 !important;
+}
+
+.react-datepicker {
+  font-family: var(--font-body) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-cards) !important;
+  background: var(--bg-surface) !important;
+  box-shadow: var(--shadow-sm) !important;
+  overflow: hidden;
+}
+
+.react-datepicker__header {
+  background: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border-default) !important;
+  padding-top: 10px !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  font-size: var(--text-body-sm) !important;
+  letter-spacing: var(--tracking-body-sm) !important;
+}
+
+.react-datepicker__day-names {
+  margin-top: 6px !important;
+}
+
+.react-datepicker__day-name {
+  color: var(--text-subtle) !important;
+  font-size: var(--text-caption) !important;
+  font-weight: 500 !important;
+  width: 2rem !important;
+  line-height: 2rem !important;
+}
+
+.react-datepicker__day {
+  color: var(--text-primary) !important;
+  font-size: var(--text-body-sm) !important;
+  width: 2rem !important;
+  line-height: 2rem !important;
+  border-radius: var(--radius-buttons) !important;
+  transition: background 0.1s;
+}
+
+.react-datepicker__day:hover {
+  background: var(--bg-subtle) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background: var(--accent-primary) !important;
+  color: var(--accent-text) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--disabled {
+  color: var(--text-subtle) !important;
+  opacity: 0.35 !important;
+}
+
+.react-datepicker__day--today {
+  font-weight: 700 !important;
+  position: relative;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: var(--text-muted) !important;
+}
+
+.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+  border-color: var(--text-primary) !important;
+}
+
+/* ── Time picker ── */
+
+.react-datepicker__time-container {
+  border-left: 1px solid var(--border-default) !important;
+  width: 120px !important;
+}
+
+.react-datepicker__time-box {
+  width: 120px !important;
+}
+
+.tp-popper .react-datepicker__time-list {
+  max-height: 200px !important;
+}
+
+.tp-popper .react-datepicker__time-container {
+  width: 120px !important;
+}
+
+.tp-popper .react-datepicker__time-box {
+  width: 120px !important;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-subtle);
+}
+
+.react-datepicker__time-list {
+  background: var(--bg-surface) !important;
+}
+
+.react-datepicker__time-list-item {
+  color: var(--text-primary) !important;
+  font-size: var(--text-body-sm) !important;
+  line-height: 2rem !important;
+  height: 2rem !important;
+  padding: 0 10px !important;
+  transition: background 0.1s;
+}
+
+.react-datepicker__time-list-item:hover {
+  background: var(--bg-subtle) !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background: var(--accent-primary) !important;
+  color: var(--accent-text) !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__time-list-item--disabled {
+  color: var(--text-subtle) !important;
+  opacity: 0.35 !important;
+}
+
+/* ── Triangle / arrow ── */
+
+.react-datepicker__triangle {
+  display: none !important;
+}
+
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
+.light input[type="date"],
+.light input[type="time"] {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.light input[type="date"]::-webkit-calendar-picker-indicator,
+.light input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.2);
+  opacity: 0.6;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.85;
 }

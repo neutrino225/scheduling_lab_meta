@@ -25,7 +25,7 @@ export function ThemeToggle() {
       style={{
         display: "flex", alignItems: "center", justifyContent: "center",
         width: "36px", height: "36px", padding: "0",
-        borderRadius: "8px", border: "1px solid var(--border-default)",
+        borderRadius: "var(--radius-buttons)", border: "1px solid var(--border-default)",
         background: "transparent", color: "var(--text-muted)", cursor: "pointer",
         fontSize: "16px",
       }}

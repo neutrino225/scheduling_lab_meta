@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { getApiData, postJson } from "@/lib/client/api";
 import type { Account, Post } from "@/lib/client/types";
 import { Select, Input, Textarea, Button, DatePicker, TimePicker } from "@/components/primitives";
+import { SegmentedControl } from "@/components/primitives/segmented-control";
 import { FileUpload } from "@/components/primitives/file-upload";
 import { PostPreview } from "@/components/post-preview";
 import "@/app/components.css";
@@ -18,12 +19,15 @@ function toLocalDate(ts: number) {
   return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10);
 }
 
+type PreviewView = "mobile" | "desktop";
+type PlatformTab = "facebook" | "instagram";
+
 export default function NewPostPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [platform, setPlatform] = useState<PlatformTab>("facebook");
   const [accountId, setAccountId] = useState("");
-  const [platform, setPlatform] = useState<"facebook" | "instagram">("facebook");
   const [caption, setCaption] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
@@ -31,6 +35,8 @@ export default function NewPostPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [previewView, setPreviewView] = useState<PreviewView>("mobile");
 
   const handleUpload = useCallback((result: UploadedFile) => {
     setUploaded((prev) => [...prev, result]);
@@ -38,6 +44,15 @@ export default function NewPostPage() {
 
   const removeUpload = useCallback((key: string) => {
     setUploaded((prev) => prev.filter((f) => f.key !== key));
+  }, []);
+
+  const reorderUpload = useCallback((from: number, to: number) => {
+    setUploaded((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -63,7 +78,12 @@ export default function NewPostPage() {
     return () => { active = false; };
   }, []);
 
-  const filtered = useMemo(() => accounts.filter((a) => a.platform === platform), [accounts, platform]);
+  const filtered = useMemo(() => {
+    if (platform === "instagram") {
+      return accounts.filter((a) => a.platform === "instagram" || a.igUserId);
+    }
+    return accounts.filter((a) => a.platform === "facebook");
+  }, [accounts, platform]);
   const selectedAccount = useMemo(() => accounts.find((a) => a.id === accountId), [accounts, accountId]);
   const accountName = selectedAccount?.name || "Your Page";
 
@@ -72,6 +92,8 @@ export default function NewPostPage() {
       setAccountId(filtered[0].id);
     }
   }, [filtered, accountId]);
+
+  const isScheduled = !!(scheduledDate && scheduledTime);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,7 +122,6 @@ export default function NewPostPage() {
       setScheduledDate("");
       setScheduledTime("");
     } catch (err) {
-
       setError(err instanceof Error ? err.message : "Failed to create post");
     } finally {
       setSubmitting(false);
@@ -109,143 +130,226 @@ export default function NewPostPage() {
 
   return (
     <AppShell>
-      <div className="page-header" style={{ marginBottom: "var(--space-xl, 2rem)" }}>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", fontWeight: 600, margin: 0 }}>Create Post</h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+      <div className="page-header" style={{ marginBottom: "var(--space-lg, 1.5rem)" }}>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-heading)", fontWeight: 600, margin: 0, letterSpacing: "var(--tracking-heading)" }}>Create Post</h1>
+        <p style={{ color: "var(--text-muted)", fontSize: "var(--text-body-sm)", letterSpacing: "var(--tracking-body-sm)", marginTop: "0.25rem" }}>
           Build and schedule your Meta content.
         </p>
       </div>
 
       <div className="create-layout">
-        {/* Main Form Container */}
+        {/* ── Left: Form ── */}
         <div className="form-container">
-          <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-xl, 2rem)" }}>
-            
-            {/* Row 1: Platform & Account */}
-            <div className="form-section">
-              <h2 className="section-title">Channel</h2>
-              <div className="form-grid-2">
-                <Select 
-                  label="Platform" 
-                  value={platform} 
-                  onChange={(e) => setPlatform(e.target.value as "facebook" | "instagram")}
-                >
-                  <option value="facebook">Facebook</option>
-                  <option value="instagram">Instagram</option>
-                </Select>
+          <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
-                <Select 
-                  label="Target Account" 
-                  value={accountId} 
+            {/* ── Platform Tabs + Account ── */}
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+              <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border-default)" }}>
+                <SegmentedControl
+                  options={[{ label: "Facebook", value: "facebook" }, { label: "Instagram", value: "instagram" }]}
+                  value={platform}
+                  onChange={(t) => { setPlatform(t); if (filtered.length > 0) setAccountId(filtered[0].id); }}
+                />
+              </div>
+              <div style={{ padding: "1rem 1.25rem" }}>
+                <Select
+                  label="Target Account"
+                  value={accountId}
                   onChange={(e) => setAccountId(e.target.value)}
                 >
                   {filtered.length === 0 && <option value="">No accounts connected</option>}
-                  {filtered.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  {filtered.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}{a.igUsername ? ` (@${a.igUsername})` : ""}
+                    </option>
+                  ))}
                 </Select>
               </div>
             </div>
 
-            {/* Row 2: Content */}
-            <div className="form-section">
-              <h2 className="section-title">Content</h2>
-              <Textarea 
-                label="Post Caption" 
-                value={caption} 
-                onChange={(e) => setCaption(e.target.value)} 
-                placeholder="Compose your message..."
-                style={{ minHeight: "180px" }}
-              />
-            </div>
-
-            {/* Row 3: Schedule & Media */}
-            <div className="form-section">
-              <h2 className="section-title">Publishing</h2>
-              <div className="form-grid-2" style={{ alignItems: "start" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md, 1rem)" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md, 1rem)" }}>
-                    <DatePicker
-                      label="Date"
-                      value={scheduledDate}
-                      onChange={(e) => setScheduledDate(e.target.value)}
-                      min={toLocalDate(Date.now())}
-                      required={platform === "instagram"}
-                    />
-                    <TimePicker
-                      label="Time"
-                      value={scheduledTime}
-                      onChange={(e) => setScheduledTime(e.target.value)}
-                      required={platform === "instagram"}
-                    />
-                  </div>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-subtle)", margin: 0 }}>
-                    Posts are scheduled in your local timezone.
-                  </p>
+            {/* ── Content Card ── */}
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+              <div style={{ padding: "1rem var(--card-padding)", borderBottom: "1px solid var(--border-default)" }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-caption)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                  Content
+                </span>
+              </div>
+              <div style={{ padding: "1rem 1.25rem" }}>
+                <Textarea
+                  label="Post Caption"
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Compose your message..."
+                  style={{ minHeight: "160px" }}
+                />
+                <div style={{ fontSize: "0.7rem", color: "var(--text-subtle)", marginTop: "0.35rem", fontFamily: "var(--font-mono)", textAlign: "right" }}>
+                  {caption.length} chars
                 </div>
-                <FileUpload platform={platform} onUpload={handleUpload} disabled={submitting} />
               </div>
             </div>
 
-            {/* Row 4: Uploaded Media Gallery */}
-            {uploaded.length > 0 && (
-              <div className="form-section">
-                <h2 className="section-title">Media Assets ({uploaded.length})</h2>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "var(--space-sm, 0.5rem)" }}>
-                  {uploaded.map((f) => (
-                    <div key={f.key} className="media-item-card">
-                      {f.type === "image" ? (
-                        <img src={f.publicUrl} alt="" className="media-item-thumb" />
-                      ) : (
-                        <div className="media-item-thumb-placeholder">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                          </svg>
+            {/* ── Media Card ── */}
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+              <div style={{ padding: "1rem var(--card-padding)", borderBottom: "1px solid var(--border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-caption)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                  Media
+                </span>
+                {uploaded.length > 0 && (
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)", fontFamily: "var(--font-mono)" }}>
+                    {uploaded.length} file{uploaded.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+              <div style={{ padding: "1rem 1.25rem" }}>
+                {uploaded.length > 0 ? (
+                  <>
+                    <div className="media-grid">
+                      {uploaded.map((f, i) => (
+                        <div
+                          key={f.key}
+                          className="media-grid-item"
+                          draggable
+                          onDragStart={() => setDragIdx(i)}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            if (dragIdx === null || dragIdx === i) return;
+                            reorderUpload(dragIdx, i);
+                            setDragIdx(i);
+                          }}
+                          onDragEnd={() => setDragIdx(null)}
+                          style={{ opacity: dragIdx === i ? 0.35 : 1 }}
+                        >
+                          <button type="button" onClick={() => removeUpload(f.key)} className="media-grid-remove" title="Remove">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                          {f.type === "image" ? (
+                            <img src={f.publicUrl} alt="" />
+                          ) : (
+                            <div className="media-grid-video">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                            </div>
+                          )}
+                          <div className="media-grid-index">{i + 1}</div>
+                          {platform === "instagram" && (
+                            <div className="media-grid-badge" title="Will be center-cropped to 4:5 on Instagram">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <div className="media-item-info">
-                        <div className="media-item-name">{f.name}</div>
-                        <div className="media-item-type">{f.type}</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeUpload(f.key)}
-                        className="media-item-remove"
-                        title="Remove"
-                      >
-                        ×
-                      </button>
+                      ))}
+                      <label className="media-grid-add">
+                        <input
+                          type="file" multiple
+                          accept={platform === "facebook" ? "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime" : "image/jpeg,image/png,image/webp,video/mp4"}
+                          hidden disabled={submitting}
+                          onChange={async (e) => {
+                            const files = e.target.files;
+                            if (!files) return;
+                            for (const file of files) {
+                              const fd = new FormData();
+                              fd.append("file", file);
+                              fd.append("type", file.type.startsWith("video") ? "video" : "image");
+                              try {
+                                const res = await fetch("/api/media/upload", { method: "POST", body: fd });
+                                if (!res.ok) continue;
+                                const data = await res.json();
+                                handleUpload({ key: data.key, publicUrl: data.publicUrl, type: file.type.startsWith("video") ? "video" : "image" as "image" | "video", name: file.name });
+                              } catch { /* ignore */ }
+                            }
+                            e.target.value = "";
+                          }}
+                        />
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </label>
                     </div>
-                  ))}
+                    {platform === "instagram" && (
+                      <div style={{ fontSize: "0.7rem", color: "var(--status-warning)", marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        Images will be center-cropped to 4:5 on Instagram. First image sets the carousel ratio.
+                      </div>
+                    )}
+                    {platform === "facebook" && (
+                      <div style={{ fontSize: "0.7rem", color: "var(--text-subtle)", marginTop: "0.5rem" }}>
+                        Facebook displays images at their natural ratio. Drag thumbnails to reorder.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <FileUpload platform={platform} onUpload={handleUpload} disabled={submitting} multiple />
+                )}
+              </div>
+            </div>
+
+            {/* ── Scheduling Card ── */}
+            <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)", overflow: "hidden" }}>
+              <div style={{ padding: "1rem var(--card-padding)", borderBottom: "1px solid var(--border-default)" }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-caption)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+                  Scheduling
+                </span>
+              </div>
+              <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "flex", gap: "var(--space-md, 1rem)", flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 180px", minWidth: "150px" }}>
+                    <DatePicker label="Date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} min={toLocalDate(Date.now())} />
+                  </div>
+                  <div style={{ flex: "1 1 140px", minWidth: "120px" }}>
+                    <TimePicker label="Time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} />
+                  </div>
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>
+                  Leave empty to save as draft. All times are in your local timezone.
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Footer: Errors & Submit */}
-            <div style={{ 
-              display: "flex", 
-              flexDirection: "column", 
-              alignItems: "flex-end", 
-              gap: "var(--space-md, 1rem)", 
-              marginTop: "var(--space-sm, 0.5rem)",
-              paddingTop: "var(--space-xl, 2rem)",
-              borderTop: "1px solid var(--border-default)"
-            }}>
-              {error && <p style={{ color: "var(--status-danger)", fontSize: "0.875rem", margin: 0, fontWeight: 500 }}>{error}</p>}
-              {success && <p style={{ color: "var(--status-success)", fontSize: "0.875rem", margin: 0, fontWeight: 500 }}>{success}</p>}
-              <Button type="submit" variant="primary" disabled={submitting} style={{ paddingLeft: "3rem", paddingRight: "3rem", height: "44px" }}>
-                {submitting ? "Processing..." : "Create Post"}
+            {/* ── Submit ── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {error && <div style={{ padding: "0.75rem 1rem", borderRadius: "var(--radius-buttons)", background: "var(--status-danger-surface)", color: "var(--status-danger)", fontSize: "0.85rem", fontWeight: 500 }}>{error}</div>}
+              {success && <div style={{ padding: "0.75rem 1rem", borderRadius: "var(--radius-buttons)", background: "var(--status-success-surface)", color: "var(--status-success)", fontSize: "0.85rem", fontWeight: 500 }}>{success}</div>}
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submitting}
+                style={{ width: "100%", height: "46px", fontSize: "0.95rem", fontWeight: 700 }}
+              >
+                {submitting ? "Processing..." : isScheduled ? "Schedule Post" : "Save as Draft"}
               </Button>
             </div>
+
           </form>
         </div>
 
-        {/* Preview Column */}
+        {/* ── Right: Preview ── */}
         <div className="preview-column">
-          <PostPreview 
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+            <span style={{ fontFamily: "var(--font-heading)", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-muted)" }}>
+              Preview
+            </span>
+            <SegmentedControl
+              options={[
+                { label: "Mobile", value: "mobile" as const },
+                { label: "Desktop", value: "desktop" as const },
+              ]}
+              value={previewView}
+              onChange={setPreviewView}
+            />
+          </div>
+
+          <PostPreview
             platform={platform}
             caption={caption}
             media={uploaded.map(f => ({ url: f.publicUrl, type: f.type }))}
             accountName={accountName}
             profilePictureUrl={selectedAccount?.profilePictureUrl}
+            view={previewView}
           />
         </div>
       </div>
@@ -253,109 +357,14 @@ export default function NewPostPage() {
       <style>{`
         .create-layout {
           display: grid;
-          grid-template-columns: minmax(0, 1fr);
-          gap: var(--space-xl, 2rem);
+          grid-template-columns: 1fr;
+          gap: 2rem;
           align-items: start;
         }
 
         .form-container {
           width: 100%;
-        }
-
-        .form-section {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-md, 1rem);
-        }
-
-        .section-title {
-          font-family: var(--font-heading, inherit);
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: var(--text-muted);
-          margin: 0;
-          padding-bottom: var(--space-sm, 0.5rem);
-          border-bottom: 1px solid var(--border-default);
-        }
-        
-        .form-grid-2 {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: var(--space-lg, 1.5rem);
-        }
-
-        .media-item-card {
-          position: relative;
-          padding: 0.75rem;
-          border-radius: 10px;
-          background: var(--bg-surface);
-          border: 1px solid var(--border-default);
-          display: flex;
-          align-items: center;
-          gap: var(--space-md, 1rem);
-          transition: all 0.2s ease;
-        }
-
-        .media-item-card:hover {
-          border-color: var(--text-muted);
-          background: var(--bg-subtle);
-        }
-
-        .media-item-thumb, .media-item-thumb-placeholder {
-          width: 52px;
-          height: 52px;
-          border-radius: 6px;
-          object-fit: cover;
-          flex-shrink: 0;
-        }
-
-        .media-item-thumb-placeholder {
-          background: var(--bg-subtle);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-muted);
-        }
-
-        .media-item-info {
           min-width: 0;
-          flex: 1;
-        }
-
-        .media-item-name {
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: var(--text-primary);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .media-item-type {
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          text-transform: capitalize;
-          margin-top: 2px;
-        }
-
-        .media-item-remove {
-          background: none;
-          border: none;
-          color: var(--text-muted);
-          cursor: pointer;
-          padding: 6px;
-          font-size: 1.5rem;
-          line-height: 1;
-          transition: color 0.15s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .media-item-remove:hover {
-          color: var(--status-danger);
         }
 
         .preview-column {
@@ -363,9 +372,9 @@ export default function NewPostPage() {
           top: 2rem;
         }
 
-        @media (min-width: 1400px) {
+        @media (min-width: 1200px) {
           .create-layout {
-            grid-template-columns: minmax(0, 1fr) 520px;
+            grid-template-columns: 1fr 480px;
           }
         }
 
@@ -373,14 +382,126 @@ export default function NewPostPage() {
           .create-layout {
             grid-template-columns: 1fr;
           }
-          .form-grid-2 {
-            grid-template-columns: 1fr;
-          }
           .preview-column {
             position: static;
             order: -1;
-            margin-bottom: var(--space-xl, 2rem);
+            margin-bottom: 1.5rem;
           }
+        }
+
+        .media-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+          gap: 0.5rem;
+        }
+
+        .media-grid-item {
+          position: relative;
+          aspect-ratio: 1;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid var(--border-default);
+          background: var(--bg-subtle);
+          cursor: grab;
+          user-select: none;
+        }
+
+        .media-grid-item:active { cursor: grabbing; }
+
+        .media-grid-item img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .media-grid-video {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-muted);
+          background: var(--bg-muted);
+        }
+
+        .media-grid-index {
+          position: absolute;
+          bottom: 4px;
+          left: 4px;
+          width: 18px;
+          height: 18px;
+          border-radius: var(--radius-full);
+          background: var(--color-graphite-black);
+          color: var(--color-canvas-white);
+          font-size: 0.6rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: var(--font-mono, var(--font-mdio));
+          letter-spacing: 0.6px;
+        }
+
+        .media-grid-remove {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 22px;
+          height: 22px;
+          border-radius: var(--radius-full);
+          border: none;
+          background: var(--color-graphite-black);
+          color: var(--color-canvas-white);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.12s;
+          z-index: 2;
+        }
+
+        .media-grid-item:hover .media-grid-remove {
+          opacity: 1;
+        }
+
+        .media-grid-remove:hover {
+          background: var(--accent-primary);
+        }
+
+        .media-grid-badge {
+          position: absolute;
+          top: 4px;
+          left: 4px;
+          width: 20px;
+          height: 20px;
+          border-radius: var(--radius-full);
+          background: var(--color-graphite-black);
+          color: var(--color-canvas-white);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2;
+        }
+
+        .media-grid-add {
+          aspect-ratio: 1;
+          border-radius: var(--radius-cards);
+          border: 1px dashed var(--border-default);
+          background: transparent;
+          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.12s;
+        }
+
+        .media-grid-add:hover {
+          border-color: var(--accent-primary);
+          color: var(--accent-primary);
+          background: var(--accent-surface);
         }
       `}</style>
     </AppShell>

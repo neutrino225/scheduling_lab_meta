@@ -73,9 +73,9 @@ export default function LoginPage() {
           <div style={{ width: "100%", maxWidth: "360px" }}>
             <h1 style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "2rem",
+              fontSize: "var(--text-heading)",
               fontWeight: 600,
-              letterSpacing: "-0.04em",
+              letterSpacing: "var(--tracking-heading)",
               marginBottom: "2.5rem",
               color: "var(--text-primary)"
             }}>
@@ -95,11 +95,11 @@ export default function LoginPage() {
                     width: "100%",
                     height: "44px",
                     padding: "0 1rem",
-                    borderRadius: "10px",
+                    borderRadius: "var(--radius-buttons)",
                     border: "1px solid var(--border-default)",
                     background: "var(--bg-subtle)",
                     color: "var(--text-primary)",
-                    fontSize: "0.9375rem",
+                    fontSize: "var(--text-body-sm)",
                     fontFamily: "inherit",
                     transition: "all 0.2s ease",
                     boxSizing: "border-box"
@@ -119,11 +119,11 @@ export default function LoginPage() {
                     width: "100%",
                     height: "44px",
                     padding: "0 1rem",
-                    borderRadius: "10px",
+                    borderRadius: "var(--radius-buttons)",
                     border: "1px solid var(--border-default)",
                     background: "var(--bg-subtle)",
                     color: "var(--text-primary)",
-                    fontSize: "0.9375rem",
+                    fontSize: "var(--text-body-sm)",
                     fontFamily: "inherit",
                     transition: "all 0.2s ease",
                     boxSizing: "border-box"
@@ -134,7 +134,7 @@ export default function LoginPage() {
               {error && (
                 <div style={{
                   color: "var(--status-danger)",
-                  fontSize: "0.8125rem",
+                  fontSize: "var(--text-body-sm)",
                   fontWeight: 500
                 }}>
                   {error}
@@ -146,11 +146,11 @@ export default function LoginPage() {
                 disabled={loading}
                 style={{
                   height: "44px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-buttons)",
                   border: "none",
                   background: loading ? "var(--text-muted)" : "var(--accent-primary)",
-                  color: "var(--bg-canvas)",
-                  fontSize: "0.9375rem",
+                  color: "var(--accent-text)",
+                  fontSize: "var(--text-body-sm)",
                   fontWeight: 600,
                   cursor: loading ? "not-allowed" : "pointer",
                   transition: "all 0.2s ease",
@@ -200,7 +200,7 @@ export default function LoginPage() {
               alignItems: "center",
               justifyContent: "center",
               color: "var(--bg-canvas)",
-              boxShadow: "0 0 20px rgba(217, 222, 232, 0.2)"
+              boxShadow: "var(--shadow-sm)"
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /><polyline points="16 16 12 12 8 16" />
@@ -208,17 +208,18 @@ export default function LoginPage() {
             </div>
             <h2 style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "1.75rem",
+              fontSize: "var(--text-subheading)",
               fontWeight: 600,
-              letterSpacing: "-0.02em",
+              letterSpacing: "var(--tracking-subheading)",
               marginBottom: "0.75rem",
               color: "var(--text-primary)"
             }}>
               The Publishing Desk.
             </h2>
             <p style={{
-              fontSize: "1rem",
-              lineHeight: "1.6",
+              fontSize: "var(--text-body)",
+              lineHeight: "var(--leading-body)",
+              letterSpacing: "var(--tracking-body)",
               color: "var(--text-muted)",
               margin: 0
             }}>

@@ -61,7 +61,10 @@ export default function JobsPage() {
 
   return (
     <AppShell>
-      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", margin: 0 }}>Jobs</h1>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-heading)", margin: 0, letterSpacing: "var(--tracking-heading)" }}>Jobs</h1>
+      <p style={{ color: "var(--text-muted)", fontSize: "var(--text-body-sm)", letterSpacing: "var(--tracking-body-sm)", margin: "0.25rem 0 1rem" }}>
+        Monitor post publishing jobs, retries, and execution status.
+      </p>
 
       <div style={{
         display: "grid",
@@ -104,7 +107,7 @@ export default function JobsPage() {
             ))}
           </div>
         ) : jobs.length === 0 ? (
-          <p style={{ padding: "1.25rem", color: "var(--text-muted)", fontSize: "0.875rem", margin: 0 }}>No jobs found.</p>
+          <p style={{ padding: "1.25rem", color: "var(--text-muted)", fontSize: "var(--text-body-sm)", letterSpacing: "var(--tracking-body-sm)", margin: 0 }}>No jobs found.</p>
         ) : (
           <div className="table-wrap">
             <table>

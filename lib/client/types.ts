@@ -16,7 +16,11 @@ export interface Account {
   igUserId: string | null;
   accessToken: string | null;
   tokenExpiresAt: number | null;
-  profilePictureUrl?: string;
+  profilePictureUrl?: string | null;
+  category?: string | null;
+  followersCount?: number | null;
+  igUsername?: string | null;
+  igProfilePictureUrl?: string | null;
 }
 
 export interface Post {
@@ -39,6 +43,13 @@ export interface Job {
   attempts: number;
   lockedAt: number | null;
   lastError: string | null;
+  post?: {
+    caption: string | null;
+    platform: "facebook" | "instagram";
+  };
+  account?: {
+    name: string;
+  };
 }
 
 export interface JobSummary {
@@ -46,4 +57,27 @@ export interface JobSummary {
   running: number;
   done: number;
   failed: number;
+}
+
+export interface MediaItem {
+  id: string;
+  postId: string;
+  url: string;
+  type: "image" | "video";
+  orderIndex: number;
+}
+
+export interface PostWithDetails extends Post {
+  media: MediaItem[];
+  account: {
+    id: string;
+    name: string;
+    platform: string;
+    pageId: string | null;
+    igUserId: string | null;
+    profilePictureUrl?: string | null;
+    category?: string | null;
+    followersCount?: number | null;
+    igUsername?: string | null;
+  } | null;
 }

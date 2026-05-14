@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuid } from "uuid";
 import { apiError, apiSuccess, API_ERRORS } from "@/lib/api/errors";
-import { listAccounts, createAccount, syncProfilePicture } from "@/lib/accounts/service";
+import { listAccounts, createAccount, syncAllProfilePictures } from "@/lib/accounts/service";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,10 +9,12 @@ export async function GET(req: NextRequest) {
     const sync = searchParams.get("sync") === "true";
 
     const accounts = await listAccounts();
-    
-    // Proactively sync profile pictures if requested or if missing
+    console.log(`[accounts] GET /api/accounts — sync=${sync}, ${accounts.length} accounts in DB`);
+
     if (sync) {
-      await Promise.all(accounts.map(acc => syncProfilePicture(acc.id)));
+      console.log("[accounts] Starting profile picture sync...");
+      await syncAllProfilePictures();
+      console.log("[accounts] Profile picture sync complete");
     }
 
     const updatedAccounts = sync ? await listAccounts() : accounts;

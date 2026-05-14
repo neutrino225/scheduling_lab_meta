@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { DM_Mono, DM_Sans, Outfit } from "next/font/google";
+import { DM_Mono, Inter } from "next/font/google";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
-const headingFont = Outfit({
+const headingFont = Inter({
   variable: "--font-heading",
+  weight: ["300", "400", "500", "600"],
   subsets: ["latin"],
 });
 
-const bodyFont = DM_Sans({
+const bodyFont = Inter({
   variable: "--font-body",
+  weight: ["300", "400", "500", "600"],
   subsets: ["latin"],
 });
 

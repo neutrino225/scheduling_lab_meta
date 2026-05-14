@@ -15,6 +15,20 @@
       "when": 1776287848637,
       "tag": "0001_brown_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1747240000000,
+      "tag": "0002_add_profile_picture_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1747240000001,
+      "tag": "0003_add_account_metadata",
+      "breakpoints": true
     }
   ]
 }

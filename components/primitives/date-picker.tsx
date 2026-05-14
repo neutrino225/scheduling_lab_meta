@@ -1,44 +1,61 @@
-import { InputHTMLAttributes, forwardRef } from "react";
+"use client";
 
-interface DatePickerProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+import { forwardRef, useCallback } from "react";
+import DatePickerLib from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { useTheme } from "@/lib/client/theme";
+
+interface DatePickerProps {
   label?: string;
+  value?: string;
+  onChange?: (e: { target: { value: string } }) => void;
+  min?: string;
+  required?: boolean;
+  style?: React.CSSProperties;
 }
 
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
-  ({ label, style, ...props }, ref) => (
-    <div>
-      {label && (
-        <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, marginBottom: "0.4rem", color: "var(--text-primary)" }}>
-          {label}
-        </label>
-      )}
-      <input
-        type="date"
-        ref={ref}
-        style={{
-          width: "100%", padding: "10px 14px", borderRadius: "8px",
-          border: "1px solid var(--border-default)",
-          background: "var(--bg-subtle)", color: "var(--text-primary)",
-          fontSize: "0.9375rem", fontFamily: "var(--font-body)",
-          outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
-          boxSizing: "border-box",
-          cursor: "pointer",
-          ...style,
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = "var(--accent-primary)";
-          e.currentTarget.style.boxShadow = "0 0 0 1px var(--accent-primary)";
-          props.onFocus?.(e);
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = "var(--border-default)";
-          e.currentTarget.style.boxShadow = "none";
-          props.onBlur?.(e);
-        }}
-        {...props}
-      />
-    </div>
-  )
+  ({ label, value, onChange, min, style, ...props }, ref) => {
+    const { theme } = useTheme();
+
+    const selected = value ? new Date(value + "T00:00:00") : null;
+    const minDate = min ? new Date(min + "T00:00:00") : undefined;
+
+    const handleChange = useCallback(
+      (date: Date | null) => {
+        if (onChange) {
+          const str = date ? date.toISOString().slice(0, 10) : "";
+          onChange({ target: { value: str } });
+        }
+      },
+      [onChange]
+    );
+
+    return (
+      <div>
+        {label && (
+          <label style={{ display: "block", fontSize: "var(--text-body-sm)", fontWeight: 500, marginBottom: "0.4rem", color: "var(--text-primary)", letterSpacing: "var(--tracking-body-sm)" }}>
+            {label}
+          </label>
+        )}
+        <div style={{ position: "relative", ...style }} data-theme={theme}>
+            <DatePickerLib
+              selected={selected}
+              onChange={handleChange}
+              minDate={minDate}
+              dateFormat="yyyy-MM-dd"
+              placeholderText="Select date"
+              ref={ref as never}
+              calendarClassName="dp-calendar"
+              wrapperClassName="dp-wrapper"
+              popperClassName="dp-popper"
+              popperPlacement="bottom-start"
+              {...(props as Record<string, unknown>)}
+            />
+        </div>
+      </div>
+    );
+  }
 );
 
 DatePicker.displayName = "DatePicker";

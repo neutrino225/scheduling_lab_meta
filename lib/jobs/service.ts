@@ -1,6 +1,6 @@
-import { eq, and, lte, inArray, or, isNull, count } from "drizzle-orm";
+import { eq, and, lte, inArray, or, isNull, count, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { jobs } from "@/drizzle/schema";
+import { jobs, posts, accounts } from "@/drizzle/schema";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type QueryResult = any;
@@ -26,11 +26,32 @@ export async function listJobs(filters?: {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = db.select().from(jobs);
+  let query: any = db
+    .select({
+      id: jobs.id,
+      postId: jobs.postId,
+      runAt: jobs.runAt,
+      status: jobs.status,
+      attempts: jobs.attempts,
+      lockedAt: jobs.lockedAt,
+      lastError: jobs.lastError,
+      post: {
+        caption: posts.caption,
+        platform: posts.platform,
+      },
+      account: {
+        name: accounts.name,
+      },
+    })
+    .from(jobs)
+    .innerJoin(posts, eq(jobs.postId, posts.id))
+    .innerJoin(accounts, eq(posts.accountId, accounts.id));
 
   if (whereConditions.length > 0) {
     query = query.where(and(...whereConditions));
   }
+
+  query = query.orderBy(desc(jobs.runAt));
 
   if (filters?.limit) {
     query = query.limit(filters.limit);

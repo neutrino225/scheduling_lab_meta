@@ -6,6 +6,7 @@ interface FileUploadProps {
   platform: "facebook" | "instagram";
   onUpload: (result: { key: string; publicUrl: string; type: "image" | "video"; name: string }) => void;
   disabled?: boolean;
+  multiple?: boolean;
 }
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -19,7 +20,7 @@ function getFileType(mime: string): "image" | "video" | null {
   return null;
 }
 
-export function FileUpload({ platform, onUpload, disabled }: FileUploadProps) {
+export function FileUpload({ platform, onUpload, disabled, multiple }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -77,10 +78,11 @@ export function FileUpload({ platform, onUpload, disabled }: FileUploadProps) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <label style={{ 
         display: "block", 
-        fontSize: "0.875rem", 
+        fontSize: "var(--text-body-sm)", 
         fontWeight: 600, 
         marginBottom: "0.5rem", 
-        color: "var(--text-primary)" 
+        color: "var(--text-primary)",
+        letterSpacing: "var(--tracking-body-sm)",
       }}>
         Media {platform === "instagram" ? "(required)" : "(optional)"}
       </label>
@@ -91,14 +93,14 @@ export function FileUpload({ platform, onUpload, disabled }: FileUploadProps) {
         onDrop={(e) => { 
           e.preventDefault(); 
           setDragOver(false); 
-          if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); 
+          for (const f of e.dataTransfer.files) handleFile(f);
         }}
         onClick={() => !uploading && inputRef.current?.click()}
         style={{
           flex: 1,
           minHeight: "120px",
           border: `1px dashed ${dragOver ? "var(--accent-primary)" : "var(--border-default)"}`,
-          borderRadius: "10px", 
+          borderRadius: "var(--radius-cards)", 
           padding: "1.5rem", 
           textAlign: "center", 
           cursor: "pointer",
@@ -116,8 +118,9 @@ export function FileUpload({ platform, onUpload, disabled }: FileUploadProps) {
           type="file"
           accept={allowedTypes.join(",")}
           hidden
+          multiple={multiple}
           disabled={disabled || uploading}
-          onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
+          onChange={(e) => { if (e.target.files) for (const f of e.target.files) handleFile(f); }}
         />
 
         {uploading ? (
@@ -132,10 +135,10 @@ export function FileUpload({ platform, onUpload, disabled }: FileUploadProps) {
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            <div style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-              <strong style={{ color: "var(--status-danger)", fontWeight: 600 }}>Click to upload</strong> or drag and drop
+            <div style={{ fontSize: "var(--text-body-sm)", color: "var(--text-muted)" }}>
+              <strong style={{ color: "var(--accent-primary)", fontWeight: 600 }}>Click to upload</strong> or drag and drop
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-subtle)", marginTop: "0.25rem" }}>
+            <div style={{ fontSize: "var(--text-caption)", color: "var(--text-subtle)", marginTop: "0.25rem" }}>
               {platform === "facebook"
                 ? "JPG, PNG, GIF, WebP, MP4, MOV (100MB max)"
                 : "JPG, PNG, WebP, MP4 (100MB max)"}

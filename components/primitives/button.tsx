@@ -10,18 +10,18 @@ function variantStyle(v: Variant): React.CSSProperties {
   switch (v) {
     case "primary":
       return {
-        background: "var(--accent-primary)", color: "#0e1117",
+        background: "var(--accent-primary)", color: "var(--accent-text)",
         border: "none",
       };
     case "outline":
       return {
-        background: "transparent", color: "var(--text-primary)",
-        border: "1px solid var(--border-default)",
+        background: "transparent", color: "var(--color-graphite-black)",
+        border: "1px solid var(--color-graphite-black)",
       };
     case "subtle":
       return {
         background: "transparent", color: "var(--text-muted)",
-        border: "none",
+        border: "1px solid var(--color-canvas-pale)",
       };
     case "danger":
       return {
@@ -32,9 +32,9 @@ function variantStyle(v: Variant): React.CSSProperties {
 }
 
 const hoverStyle: Record<Variant, React.CSSProperties> = {
-  primary: { background: "var(--accent-primary)", filter: "brightness(0.88)", color: "#0e1117" },
-  outline: { background: "var(--bg-subtle)", borderColor: "var(--accent-primary)" },
-  subtle: { background: "var(--bg-subtle)", color: "var(--text-primary)" },
+  primary: { background: "var(--accent-primary)", filter: "brightness(0.94)", color: "var(--accent-text)" },
+  outline: { background: "var(--hover-bg)", borderColor: "var(--color-graphite-black)", color: "var(--color-graphite-black)" },
+  subtle: { background: "var(--hover-bg)", color: "var(--text-primary)" },
   danger: { background: "var(--status-danger-surface)" },
 };
 
@@ -42,8 +42,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "outline", className = "", style, disabled, onMouseEnter, onMouseLeave, children, ...props }, ref) => {
     const base: React.CSSProperties = {
       display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.375rem",
-      padding: "7px 16px", borderRadius: "7px",
-      fontSize: "0.875rem", fontWeight: 600, letterSpacing: "0.01em",
+      padding: "10px 12px", borderRadius: "var(--radius-buttons)",
+      fontSize: "var(--text-body-sm)", fontWeight: 600, letterSpacing: "var(--tracking-body-sm)",
       cursor: disabled ? "not-allowed" : "pointer",
       opacity: disabled ? 0.5 : 1,
       transition: "background 0.12s, border-color 0.12s, filter 0.12s",
