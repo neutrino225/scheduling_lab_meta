@@ -13,18 +13,19 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             {label}
           </label>
         )}
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", height: style?.height || "var(--control-height, 34px)" }}>
           <select
             ref={ref}
             className={className}
             style={{
-              width: "100%", padding: "10px 36px 10px 12px",
+              width: "100%", height: "100%", padding: "0 36px 0 12px",
               borderRadius: "var(--radius-buttons)", border: "1px solid var(--border-default)",
               background: "var(--bg-subtle)", color: "var(--text-primary)",
               fontSize: "var(--text-body-sm)", fontFamily: "inherit",
               cursor: "pointer", appearance: "none",
               WebkitAppearance: "none", MozAppearance: "none",
               outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
+              boxSizing: "border-box",
               ...style,
             }}
             onFocus={(e) => {

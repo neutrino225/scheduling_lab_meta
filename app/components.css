@@ -158,8 +158,9 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
-    padding: 1rem;
-  }
+  padding: 1rem;
+}
+
   .list-item > div:last-child {
     display: flex;
     width: 100%;
@@ -325,7 +326,8 @@ tbody tr:hover {
 
 .input {
   width: 100%;
-  padding: 10px 12px;
+  height: var(--control-height, 34px);
+  padding: 0 12px;
   border-radius: var(--radius-buttons);
   border: 1px solid var(--border-default);
   background: var(--bg-subtle);
@@ -388,19 +390,6 @@ tbody tr:hover {
   color: var(--text-muted);
 }
 
-.skeleton {
-  background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--bg-surface) 50%, var(--bg-subtle) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: var(--radius-sm, 6px);
-}
-
-.skeleton-card { height: 100px; }
-.skeleton-row { height: 36px; margin-bottom: 8px; }
-.skeleton-text { height: 14px; width: 60%; margin-bottom: 8px; }
-.skeleton-text.short { width: 40%; }
-.skeleton-text.long { width: 80%; }
-
 .spinner {
   width: 24px;
   height: 24px;
@@ -408,11 +397,6 @@ tbody tr:hover {
   border-top-color: var(--accent-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
 }
 
 @keyframes spin {
@@ -425,4 +409,18 @@ tbody tr:hover {
   .card-header { padding: 0.875rem 1rem; }
   .card-body { padding: 1rem; }
   .btn { padding: 8px 10px; font-size: 0.8125rem; }
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 786px) {
+  .accounts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }

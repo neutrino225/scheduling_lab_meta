@@ -9,7 +9,8 @@
     "lint": "eslint",
     "migrate": "drizzle-kit migrate",
     "worker": "tsx --env-file=.env.local worker/index.ts",
-    "worker:dev": "tsx watch --env-file=.env.local worker/index.ts"
+    "worker:dev": "tsx watch --env-file=.env.local worker/index.ts",
+    "db:reset": "tsx --env-file=.env.local scripts/reset.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
@@ -19,6 +20,7 @@
     "react": "19.2.4",
     "react-datepicker": "^9.1.0",
     "react-dom": "19.2.4",
+    "sonner": "^2.0.7",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

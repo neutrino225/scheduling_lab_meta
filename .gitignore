@@ -44,3 +44,5 @@ next-env.d.ts
 # local storage (development)
 /storage/media/
 
+
+screenshots/

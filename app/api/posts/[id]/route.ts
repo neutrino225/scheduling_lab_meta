@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { apiError, apiSuccess, API_ERRORS } from "@/lib/api/errors";
-import { getPost, reschedulePost } from "@/lib/posts/service";
+import { getPost, updatePost, deletePost } from "@/lib/posts/service";
 import { parseJsonBody } from "@/lib/api/validation";
 
 interface RouteParams {
@@ -54,16 +54,21 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const body = await parseJsonBody<{ scheduledAt?: number }>(req);
-    if (!body || typeof body.scheduledAt !== "number") {
+    const body = await parseJsonBody<{ 
+      scheduledAt?: number;
+      caption?: string;
+      media?: Array<{ url: string; type: "image" | "video" }>;
+    }>(req);
+
+    if (!body) {
       return apiError(
-        API_ERRORS.VALIDATION_ERROR.code,
-        "scheduledAt (number) is required",
-        API_ERRORS.VALIDATION_ERROR.status
+        API_ERRORS.BAD_REQUEST.code,
+        "Request body is required",
+        API_ERRORS.BAD_REQUEST.status
       );
     }
 
-    const result = await reschedulePost(id, body.scheduledAt);
+    const result = await updatePost(id, body);
 
     if (!result) {
       return apiError(
@@ -78,7 +83,32 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     console.error("PATCH /api/posts/[id] error:", error);
     return apiError(
       API_ERRORS.INTERNAL_ERROR.code,
-      "Failed to reschedule post",
+      "Failed to update post",
+      API_ERRORS.INTERNAL_ERROR.status
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+
+    if (!id || typeof id !== "string") {
+      return apiError(
+        API_ERRORS.BAD_REQUEST.code,
+        "Post ID is required",
+        API_ERRORS.BAD_REQUEST.status
+      );
+    }
+
+    await deletePost(id);
+
+    return apiSuccess({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/posts/[id] error:", error);
+    return apiError(
+      API_ERRORS.INTERNAL_ERROR.code,
+      "Failed to delete post",
       API_ERRORS.INTERNAL_ERROR.status
     );
   }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Mono, Inter } from "next/font/google";
 import { Providers } from "@/app/providers";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const headingFont = Inter({
@@ -41,7 +42,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <Toaster position="top-right" richColors theme="inherit" />
+        </Providers>
       </body>
     </html>
   );

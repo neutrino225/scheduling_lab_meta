@@ -40,7 +40,41 @@ export default function LoginPage() {
     }
   }
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        background: "var(--bg-canvas)",
+        color: "var(--text-primary)",
+        fontFamily: "var(--font-body)"
+      }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+          <div style={{ width: "100%", maxWidth: "360px" }}>
+            <div className="skeleton skeleton-text" style={{ width: "140px", height: "32px", marginBottom: "2.5rem" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div className="skeleton" style={{ height: "44px", borderRadius: "var(--radius-buttons)" }} />
+              <div className="skeleton" style={{ height: "44px", borderRadius: "var(--radius-buttons)" }} />
+              <div className="skeleton" style={{ height: "44px", borderRadius: "var(--radius-buttons)", marginTop: "0.75rem" }} />
+            </div>
+          </div>
+        </div>
+        <div style={{
+          flex: 1,
+          background: "var(--bg-surface)",
+          borderLeft: "1px solid var(--border-default)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          padding: "4rem",
+        }} className="branding-side">
+          <div className="skeleton" style={{ width: "40px", height: "40px", borderRadius: "50%", marginBottom: "2rem" }} />
+          <div className="skeleton skeleton-text" style={{ width: "220px", height: "20px", marginBottom: "0.75rem" }} />
+          <div className="skeleton skeleton-text" style={{ width: "300px", height: "14px" }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{

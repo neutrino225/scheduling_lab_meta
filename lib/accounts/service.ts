@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { accounts } from "@/drizzle/schema";
 import type { InferInsertModel } from "drizzle-orm";
+import { v4 as uuid } from "uuid";
 
 type NewAccount = InferInsertModel<typeof accounts>;
 
@@ -49,8 +50,7 @@ export async function updateAccount(id: string, data: Partial<NewAccount>) {
 }
 
 /**
- * Batch-sync profile pictures for all Facebook pages
- * Uses /me/accounts with field expansion to fetch all page pictures in one request
+ * Batch-sync profile pictures and page data for all Facebook pages
  */
 /**
  * Fetch a single page's profile picture using its own Page Access Token
@@ -78,6 +78,7 @@ async function fetchPagePicture(pageId: string, accessToken: string): Promise<st
 interface PageData {
   id: string;
   name?: string;
+  access_token?: string;
   category?: string;
   followers_count?: number;
   picture?: { data?: { url?: string } };
@@ -86,37 +87,39 @@ interface PageData {
 
 /**
  * Full batch sync: fetches enriched page data + profile pictures
- * Uses GET /me/accounts?fields=name,id,category,followers_count,instagram_business_account{id,username,profile_picture_url},picture.type(large)
+ * Also imports new pages if they are discovered
  */
-export async function syncAllProfilePictures() {
+export async function syncAllProfilePictures(manualToken?: string) {
   const baseUrl = process.env.META_GRAPH_BASE_URL || "https://graph.facebook.com";
   const version = process.env.META_GRAPH_VERSION || "v20.0";
-  const userToken = process.env.META_ACCESS_TOKEN;
+  const userToken = manualToken || process.env.META_ACCESS_TOKEN;
 
   if (userToken) {
     try {
-      const fields = "name,id,category,followers_count,instagram_business_account{id,username,profile_picture_url},picture.type(large)";
+      const fields = "name,id,access_token,category,followers_count,instagram_business_account{id,username,profile_picture_url},picture.type(large)";
       const url = new URL(`${baseUrl}/${version}/me/accounts`);
       url.searchParams.set("fields", fields);
       url.searchParams.set("access_token", userToken);
 
-      console.log(`[accounts] Batch sync: GET ${url.host}${url.pathname}?fields=${fields}&access_token=***${userToken.slice(-4)}`);
+      console.log(`[accounts] Batch sync: GET ${url.host}${url.pathname}?fields=...&access_token=***${userToken.slice(-4)}`);
 
       const res = await fetch(url.toString(), { cache: "no-store" });
-      console.log(`[accounts] Batch sync: status ${res.status}`);
-
+      
       if (res.ok) {
         const body = await res.json();
         const pages: PageData[] = body.data || [];
-        console.log(`[accounts] Batch sync: got ${pages.length} pages`);
+        console.log(`[accounts] Batch sync: got ${pages.length} pages from Meta`);
 
         let updated = 0;
+        let inserted = 0;
+
         for (const page of pages) {
           const ig = page.instagram_business_account;
-          const data: Record<string, unknown> = {};
+          const data: Record<string, any> = {};
 
           if (page.picture?.data?.url) data.profilePictureUrl = page.picture.data.url;
           if (page.name) data.name = page.name;
+          if (page.access_token) data.accessToken = page.access_token;
           if (page.category) data.category = page.category;
           if (page.followers_count != null) data.followersCount = page.followers_count;
           if (ig?.id) data.igUserId = ig.id;
@@ -126,42 +129,52 @@ export async function syncAllProfilePictures() {
           if (Object.keys(data).length === 0) continue;
 
           const result = await db.update(accounts).set(data).where(eq(accounts.pageId, page.id));
-          if (result.changes > 0) updated++;
+          if (result.changes > 0) {
+            updated++;
+          } else if (page.access_token) {
+            // New page discovered, import it
+            await db.insert(accounts).values({
+              id: uuid(),
+              platform: "facebook",
+              name: page.name || "Unknown Page",
+              pageId: page.id,
+              accessToken: page.access_token,
+              profilePictureUrl: data.profilePictureUrl || null,
+              category: data.category || null,
+              followersCount: data.followersCount || null,
+              igUserId: data.igUserId || null,
+              igUsername: data.igUsername || null,
+              igProfilePictureUrl: data.igProfilePictureUrl || null,
+            });
+            inserted++;
+          }
         }
-        console.log(`[accounts] Batch sync done — ${updated}/${pages.length} accounts updated`);
+        console.log(`[accounts] Batch sync done — ${updated} updated, ${inserted} inserted`);
         return;
       }
 
       const errBody = await res.text().catch(() => "no body");
-      console.log(`[accounts] Batch sync failed (${res.status}), falling back to per-account sync`);
+      console.log(`[accounts] Batch sync failed (${res.status})`);
       console.log(`[accounts] Batch error: ${errBody}`);
     } catch (error) {
-      console.error("[accounts] Batch sync error, falling back to per-account sync:", error);
+      console.error("[accounts] Batch sync error:", error);
     }
-  } else {
-    console.log("[accounts] No META_ACCESS_TOKEN — using per-account sync");
   }
 
   // Strategy 2: per-account fallback (profile picture only)
-  console.log("[accounts] Per-account sync: fetching profile pictures individually...");
+  console.log("[accounts] Per-account fallback sync...");
   const allAccounts = await db.select().from(accounts);
-  let updated = 0;
+  let updatedCount = 0;
 
   for (const account of allAccounts) {
-    if (!account.pageId || !account.accessToken) {
-      console.log(`[accounts]   ${account.name} — no pageId or token, skipping`);
-      continue;
-    }
+    if (!account.pageId || !account.accessToken) continue;
 
     const picUrl = await fetchPagePicture(account.pageId, account.accessToken);
     if (picUrl) {
       await db.update(accounts).set({ profilePictureUrl: picUrl }).where(eq(accounts.id, account.id));
-      updated++;
-      console.log(`[accounts]   ${account.name} — profile picture updated`);
-    } else {
-      console.log(`[accounts]   ${account.name} — fetch failed (expired token?)`);
+      updatedCount++;
     }
   }
 
-  console.log(`[accounts] Per-account sync done — ${updated}/${allAccounts.length} accounts updated`);
+  console.log(`[accounts] Per-account sync done — ${updatedCount} accounts updated`);
 }

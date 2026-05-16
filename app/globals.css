@@ -153,7 +153,58 @@ body {
   line-height: var(--leading-body);
 }
 
-/* ── Shared Input Styling ── */
+/* ── Skeleton Animations ── */
+@keyframes skeleton-pulse {
+  0% {
+    background-color: var(--bg-subtle);
+  }
+  50% {
+    background-color: var(--bg-muted);
+  }
+  100% {
+    background-color: var(--bg-subtle);
+  }
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  display: block;
+  width: 100%;
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-text.short {
+  width: 40%;
+}
+
+.skeleton-text.medium {
+  width: 70%;
+}
+
+.skeleton-text.long {
+  width: 100%;
+}
+
+.skeleton-row {
+  height: 36px;
+  margin-bottom: 8px;
+}
+
+.skeleton-card {
+  height: 100px;
+}
+
+.skeleton-circle {
+  border-radius: var(--radius-full);
+  aspect-ratio: 1;
+}
+
 
 .dp-wrapper,
 .tp-popper {
@@ -163,7 +214,8 @@ body {
 .dp-wrapper input,
 .tp-popper input {
   width: 100% !important;
-  padding: 10px 12px !important;
+  height: var(--control-height) !important;
+  padding: 0 12px !important;
   border-radius: var(--radius-buttons) !important;
   border: 1px solid var(--border-default) !important;
   background: var(--bg-subtle) !important;
@@ -242,6 +294,13 @@ body {
   background: var(--accent-primary) !important;
   color: var(--accent-text) !important;
   font-weight: 600 !important;
+}
+
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--keyboard-selected:hover {
+  background: var(--accent-primary) !important;
+  filter: brightness(0.9);
+  color: var(--accent-text) !important;
 }
 
 .react-datepicker__day--disabled {

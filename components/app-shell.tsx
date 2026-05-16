@@ -35,6 +35,15 @@ const navItems = [
     )
   },
   { 
+    href: "/media", 
+    label: "Media",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+      </svg>
+    )
+  },
+  { 
     href: "/jobs", 
     label: "Jobs",
     icon: (
@@ -133,7 +142,7 @@ function LogoutButton({ mobile, onClick, loading }: { mobile?: boolean; onClick:
         alignItems: "center",
         justifyContent: mobile ? "center" : "flex-start",
         gap: "10px",
-        width: "100%",
+        width: mobile ? "40px" : "100%",
         height: mobile ? "40px" : "auto",
         padding: mobile ? "0" : "10px 12px",
         borderRadius: "var(--radius-buttons)",
@@ -145,6 +154,7 @@ function LogoutButton({ mobile, onClick, loading }: { mobile?: boolean; onClick:
         fontWeight: 600,
         transition: "all 0.15s ease",
         fontFamily: "inherit",
+        flexShrink: 0,
       }}
       onMouseEnter={(e) => { e.currentTarget.style.background = "var(--hover-bg)"; e.currentTarget.style.color = "var(--status-danger)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -211,7 +221,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <main style={{ flex: 1, minWidth: 0, padding: "2rem 2rem", overflowY: "auto", marginLeft: "240px" }} className="main-content">
+        <main style={{ flex: 1, minWidth: 0, padding: "2.5rem 3rem", overflowY: "auto", marginLeft: "240px" }} className="main-content">
           {children}
         </main>
 

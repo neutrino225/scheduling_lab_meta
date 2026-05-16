@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { accounts } from "@/drizzle/schema";
+import { apiSuccess, apiError, API_ERRORS } from "@/lib/api/errors";
 
 interface PageEntry {
   name: string;
@@ -11,14 +12,20 @@ interface PageEntry {
   category?: string;
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const token = process.env.META_ACCESS_TOKEN;
+    let token = process.env.META_ACCESS_TOKEN;
+
+    // Allow passing token in body for manual re-auth
+    try {
+      const body = await req.json();
+      if (body.token) token = body.token;
+    } catch {
+      // ignore if no body
+    }
+
     if (!token) {
-      return NextResponse.json(
-        { code: "CONFIG_ERROR", message: "META_ACCESS_TOKEN is not set" },
-        { status: 400 }
-      );
+      return apiError("CONFIG_ERROR", "META_ACCESS_TOKEN is not set and no token provided", 400);
     }
 
     const apiVersion = process.env.META_GRAPH_VERSION || "v20.0";
@@ -31,20 +38,14 @@ export async function POST() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      return NextResponse.json(
-        { code: "GRAPH_API_ERROR", message: "Failed to fetch pages", error: err },
-        { status: 400 }
-      );
+      return apiError("GRAPH_API_ERROR", "Failed to fetch pages", 400, { error: err });
     }
 
     const data = await res.json() as { data: PageEntry[] };
     const pages = data.data.filter((p) => p.access_token);
 
     if (pages.length === 0) {
-      return NextResponse.json(
-        { code: "NO_PAGES", message: "No pages found with access tokens" },
-        { status: 404 }
-      );
+      return apiError("NO_PAGES", "No pages found with access tokens", 404);
     }
 
     const allAccountIds = (
@@ -77,8 +78,7 @@ export async function POST() {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return apiSuccess({
       imported: inserted.length,
       updated: updated.length,
       total: pages.length,
@@ -86,12 +86,10 @@ export async function POST() {
       refreshed: updated,
     });
   } catch (err) {
-    return NextResponse.json(
-      {
-        code: "INTERNAL_ERROR",
-        message: err instanceof Error ? err.message : "Unknown error",
-      },
-      { status: 500 }
+    return apiError(
+      API_ERRORS.INTERNAL_ERROR.code,
+      err instanceof Error ? err.message : "Unknown error",
+      API_ERRORS.INTERNAL_ERROR.status
     );
   }
 }

@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         style={{
-          width: "100%", padding: "10px 12px", borderRadius: "var(--radius-buttons)",
+          width: "100%", height: "var(--control-height, 34px)", padding: "0 12px", borderRadius: "var(--radius-buttons)",
           border: "1px solid var(--border-default)",
           background: "var(--bg-subtle)", color: "var(--text-primary)",
           fontSize: "var(--text-body-sm)", fontFamily: "inherit",
