@@ -63,6 +63,7 @@ export interface MediaItem {
   id: string;
   postId: string;
   url: string;
+  publicUrl?: string;
   type: "image" | "video";
   orderIndex: number;
 }

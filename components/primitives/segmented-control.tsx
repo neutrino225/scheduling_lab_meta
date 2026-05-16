@@ -6,12 +6,14 @@ interface SegmentedControlProps<T extends string> {
   options: { label: string; value: T }[];
   value: T;
   onChange: (value: T) => void;
+  disabled?: boolean;
 }
 
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
+  disabled,
 }: SegmentedControlProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
@@ -109,7 +111,8 @@ export function SegmentedControl<T extends string>({
             key={opt.value}
             data-seg
             type="button"
-            onClick={() => onChange(opt.value)}
+            disabled={disabled}
+            onClick={() => !disabled && onChange(opt.value)}
             onMouseDown={() => setPressedIndex(i)}
             onMouseUp={() => setPressedIndex(null)}
             onMouseEnter={() => setHoveredIndex(i)}
@@ -136,7 +139,8 @@ export function SegmentedControl<T extends string>({
               fontSize: "var(--text-body-sm)",
               fontWeight: active ? 600 : 500,
               fontFamily: "inherit",
-              cursor: "pointer",
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.5 : 1,
               whiteSpace: "nowrap",
               letterSpacing: "var(--tracking-body-sm)",
               transition: transitionParts.join(", "),

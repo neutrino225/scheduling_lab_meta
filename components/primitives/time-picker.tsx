@@ -9,6 +9,7 @@ interface TimePickerProps {
   value?: string;
   onChange?: (e: { target: { value: string } }) => void;
   required?: boolean;
+  disabled?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -33,7 +34,7 @@ function formatHHmm(hour12: number, minute: number, isPM: boolean) {
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
 
-export function TimePicker({ label, value, onChange, style }: TimePickerProps) {
+export function TimePicker({ label, value, onChange, disabled, style }: TimePickerProps) {
   const parsed = useMemo(() => parseValue(value), [value]);
 
   const emit = useCallback(
@@ -74,6 +75,7 @@ export function TimePicker({ label, value, onChange, style }: TimePickerProps) {
         <div style={{ flex: "1 1 0px", height: "100%", minWidth: 0 }}>
           <Select
             value={parsed.hour12}
+            disabled={disabled}
             onChange={(e) => emit(Number(e.target.value), parsed.minute, parsed.isPM)}
             style={{ padding: "0 28px 0 12px" }}
           >
@@ -100,6 +102,7 @@ export function TimePicker({ label, value, onChange, style }: TimePickerProps) {
         <div style={{ flex: "1 1 0px", height: "100%", minWidth: 0 }}>
           <Select
             value={parsed.minute}
+            disabled={disabled}
             onChange={(e) => emit(parsed.hour12, Number(e.target.value), parsed.isPM)}
             style={{ padding: "0 28px 0 12px" }}
           >
@@ -119,6 +122,7 @@ export function TimePicker({ label, value, onChange, style }: TimePickerProps) {
               { label: "PM", value: "pm" }
             ]}
             value={parsed.isPM ? "pm" : "am"}
+            disabled={disabled}
             onChange={(v) => emit(parsed.hour12, parsed.minute, v === "pm")}
           />
         </div>

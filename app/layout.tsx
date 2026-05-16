@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         <Providers>
           {children}
-          <Toaster position="top-right" richColors theme="inherit" />
+          <Toaster position="top-right" richColors />
         </Providers>
       </body>
     </html>

@@ -11,6 +11,7 @@ interface DatePickerProps {
   onChange?: (e: { target: { value: string } }) => void;
   min?: string;
   required?: boolean;
+  disabled?: boolean;
   style?: React.CSSProperties;
 }
 
