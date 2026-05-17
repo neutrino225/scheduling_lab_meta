@@ -25,7 +25,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
     const handleChange = useCallback(
       (date: Date | null) => {
         if (onChange) {
-          const str = date ? date.toISOString().slice(0, 10) : "";
+          const str = date
+            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+            : "";
           onChange({ target: { value: str } });
         }
       },

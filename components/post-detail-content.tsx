@@ -80,6 +80,10 @@ export function PostDetailContent({ post, id }: { post: PostWithDetails, id: str
       const [y, m, d] = date.split("-").map(Number);
       const [h, min] = time.split(":").map(Number);
       scheduledAt = new Date(y, m - 1, d, h, min).getTime();
+      if (scheduledAt <= Date.now()) {
+        setError("Schedule time must be in the future.");
+        return;
+      }
     }
 
     setSaving(true);

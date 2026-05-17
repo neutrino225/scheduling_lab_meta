@@ -11,7 +11,7 @@ services:
       - "127.0.0.1:3000:3000"
     volumes:
       - metalab-data:/app/storage
-      - metalab-db:/app/db.sqlite
+      - metalab-db:/app/data
     command: npm start
     restart: unless-stopped
     healthcheck:
@@ -27,7 +27,7 @@ services:
     env_file: .env
     volumes:
       - metalab-data:/app/storage
-      - metalab-db:/app/db.sqlite
+      - metalab-db:/app/data
     command: npx tsx worker/index.ts
     restart: unless-stopped
     depends_on:
@@ -43,7 +43,7 @@ services:
       - migrate
     volumes:
       - metalab-data:/app/storage
-      - metalab-db:/app/db.sqlite
+      - metalab-db:/app/data
     command: >
       sh -c "npm run migrate 2>/dev/null && echo 'Migrations complete' || echo 'No pending migrations'"
     restart: no
@@ -92,7 +92,45 @@ services:
       timeout: 10s
       retries: 3
 
+  # zrok agent (self-contained Docker setup)
+  zrok-init:
+    image: busybox
+    command: chown -Rc 2171:2171 /mnt/
+    user: root
+    volumes:
+      - zrok_env:/mnt
+
+  zrok-enable:
+    image: docker.io/openziti/zrok2
+    depends_on:
+      zrok-init:
+        condition: service_completed_successfully
+    entrypoint: zrok2-enable
+    environment:
+      HOME: /mnt
+      ZROK2_ENABLE_TOKEN: ${ZROK2_ENABLE_TOKEN}
+      ZROK2_API_ENDPOINT: ${ZROK2_API_ENDPOINT:-https://api-v2.zrok.io}
+    volumes:
+      - zrok_env:/mnt
+
+  zrok-share:
+    image: docker.io/openziti/zrok2
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      zrok-enable:
+        condition: service_completed_successfully
+    environment:
+      HOME: /mnt
+    command:
+      - share
+      - public
+      - http://metalab-app:3000
+    volumes:
+      - zrok_env:/mnt
+
 volumes:
   metalab-data:
   metalab-db:
   minio-data:
+  zrok_env:

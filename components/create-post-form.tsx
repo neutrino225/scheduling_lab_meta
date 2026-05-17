@@ -76,19 +76,26 @@ export function CreatePostForm({ initialAccounts }: { initialAccounts: Account[]
     }
   }, [filtered, accountId]);
 
-  const isScheduled = !!(scheduledDate && scheduledTime);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(mode: "draft" | "schedule") {
     setError(null);
     setSuccess(null);
 
     if (!accountId) { setError("Select an account."); return; }
     if (platform === "instagram" && uploaded.length === 0) { setError("Instagram posts require at least one image or video."); return; }
 
-    const scheduledAtStr = (scheduledDate && scheduledTime) ? `${scheduledDate}T${scheduledTime}` : "";
-    const scheduledTs = scheduledAtStr ? new Date(scheduledAtStr).getTime() : undefined;
-    if (scheduledTs && isNaN(scheduledTs)) { setError("Invalid schedule time."); return; }
+    let scheduledTs: number | undefined;
+    if (mode === "schedule") {
+      if (!scheduledDate || !scheduledTime) {
+        setError("Set a date and time to schedule, or save as draft.");
+        return;
+      }
+      scheduledTs = new Date(`${scheduledDate}T${scheduledTime}:00`).getTime();
+      if (isNaN(scheduledTs)) { setError("Invalid schedule time."); return; }
+      if (scheduledTs <= Date.now()) {
+        setError("Schedule time must be in the future.");
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
@@ -115,7 +122,7 @@ export function CreatePostForm({ initialAccounts }: { initialAccounts: Account[]
     <div className="create-layout">
       {/* ── Left: Form ── */}
       <div className="form-container">
-        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
           {/* ── Platform Tabs + Account ── */}
           <div className="card" style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", borderRadius: "var(--radius-cards)" }}>
@@ -273,14 +280,26 @@ export function CreatePostForm({ initialAccounts }: { initialAccounts: Account[]
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {error && <div style={{ padding: "0.5rem 1rem", borderRadius: "var(--radius-buttons)", background: "var(--status-danger-surface)", color: "var(--status-danger)", fontSize: "0.85rem", fontWeight: 500 }}>{error}</div>}
             {success && <div style={{ padding: "0.5rem 1rem", borderRadius: "var(--radius-buttons)", background: "var(--status-success-surface)", color: "var(--status-success)", fontSize: "0.85rem", fontWeight: 500 }}>{success}</div>}
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submitting}
-              style={{ width: "100%", height: "40px", fontSize: "0.95rem", fontWeight: 700 }}
-            >
-              {submitting ? "Processing..." : isScheduled ? "Schedule Post" : "Save as Draft"}
-            </Button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting}
+                onClick={() => handleSubmit("draft")}
+                style={{ flex: 1, height: "40px", fontSize: "0.95rem", fontWeight: 700 }}
+              >
+                {submitting ? "Processing..." : "Save as Draft"}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                disabled={submitting}
+                onClick={() => handleSubmit("schedule")}
+                style={{ flex: 1, height: "40px", fontSize: "0.95rem", fontWeight: 700 }}
+              >
+                {submitting ? "Processing..." : "Schedule"}
+              </Button>
+            </div>
           </div>
 
         </form>
